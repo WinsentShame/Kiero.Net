@@ -3,7 +3,7 @@ cd /d "%~dp0"
 
 echo === ImGui core ===
 cl /c /O2 /EHsc /MD /wd4996 /I. /IImGui ^
-   ImGui\imgui.cpp ImGui\imgui_draw.cpp ImGui\imgui_widgets.cpp ImGui\imgui_demo.cpp
+   ImGui\imgui.cpp ImGui\imgui_draw.cpp ImGui\imgui_widgets.cpp ImGui\imgui_tables.cpp ImGui\imgui_demo.cpp
 if errorlevel 1 goto :err
 
 echo === ImGui backends ===
