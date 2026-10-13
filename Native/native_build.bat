@@ -2,24 +2,23 @@
 cd /d "%~dp0"
 
 echo === ImGui core ===
-cl /c /O2 /EHsc /MD /I. /Iimgui ^
-   imgui\imgui.cpp ^
-   imgui\imgui_draw.cpp ^
-   imgui\imgui_widgets.cpp ^
-   imgui\imgui_demo.cpp
+cl /c /O2 /EHsc /MD /wd4996 /I. /IImGui ^
+   ImGui\imgui.cpp ImGui\imgui_draw.cpp ImGui\imgui_widgets.cpp ImGui\imgui_demo.cpp
 if errorlevel 1 goto :err
 
 echo === ImGui backends ===
-cl /c /O2 /EHsc /MD /I. /Iimgui /Ibackends ^
-   backends\imgui_impl_win32.cpp ^
-   backends\imgui_impl_dx11.cpp ^
-   backends\imgui_impl_dx12.cpp
+cl /c /O2 /EHsc /MD /wd4996 /I. /IImGui /IBackends ^
+   Backends\imgui_impl_win32.cpp Backends\imgui_impl_dx11.cpp Backends\imgui_impl_dx12.cpp
 if errorlevel 1 goto :err
 
 echo === Kiero ===
-cl /c /O2 /EHsc /MD /I. /Ikiero ^
-   kiero\kiero.cpp ^
-   kiero\kiero_wrapper.cpp
+cl /c /O2 /EHsc /MD /wd4996 /I. /IKiero ^
+   Kiero\kiero.cpp Kiero\kiero_wrapper.cpp
+if errorlevel 1 goto :err
+
+echo === Shim ===
+cl /c /O2 /EHsc /MD /wd4996 /I. /IImGui /IBackends ^
+   Backends\shim.cpp
 if errorlevel 1 goto :err
 
 echo === archive ===

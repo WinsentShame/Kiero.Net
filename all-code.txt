@@ -1,0 +1,364 @@
+﻿
+
+===== D:\User Projects\Kiero.Net\Native\Kiero\Kiero.cs =====
+
+using System;
+using System.Runtime.InteropServices;
+
+namespace Kiero.Net;
+
+public static unsafe class Kiero
+{
+    private const string Dll = "kiero_native";
+
+    [DllImport(Dll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "kiero_wrapper_init")]
+    private static extern int NativeInit(int renderType);
+
+    [DllImport(Dll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "kiero_wrapper_shutdown")]
+    private static extern void NativeShutdown();
+
+    [DllImport(Dll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "kiero_wrapper_get_methods_table")]
+    private static extern nint NativeGetMethodsTable();
+
+    [DllImport(Dll, CallingConvention = CallingConvention.Cdecl, EntryPoint = "kiero_wrapper_get_render_type")]
+    private static extern int NativeGetRenderType();
+
+    public static KieroStatus Init(KieroRenderType type) => (KieroStatus)NativeInit((int)type);
+    public static void Shutdown() => NativeShutdown();
+    public static nint GetMethodsTable() => NativeGetMethodsTable();
+    public static KieroRenderType GetRenderType() => (KieroRenderType)NativeGetRenderType();
+
+    public static nint GetMethod(int index)
+    {
+        nint t = GetMethodsTable();
+        if (t == 0) return 0;
+        return *(nint*)(t + index * IntPtr.Size);
+    }
+}
+
+
+===== D:\User Projects\Kiero.Net\Native\Kiero\KieroIndices.cs =====
+
+namespace Kiero.Net;
+
+public static class KieroIndices
+{
+    // DX11: [0..17] swapChain, [18..60] device, [61..204] context
+    public const int D3D11_SwapChain_Present = 8;
+    public const int D3D11_SwapChain_GetBuffer = 9;
+    public const int D3D11_SwapChain_ResizeBuffers = 13;
+
+    // DX12: [0..43] device, [44..62] queue, [63..71] allocator,
+    //       [72..131] commandList, [132..149] swapChain
+    public const int D3D12_SwapChain_Present = 132 + 8;
+    public const int D3D12_SwapChain_GetBuffer = 132 + 9;
+    public const int D3D12_SwapChain_ResizeBuffers = 132 + 13;
+}
+
+
+===== D:\User Projects\Kiero.Net\Native\Kiero\KieroRenderType.cs =====
+
+namespace Kiero.Net;
+
+public enum KieroRenderType
+{
+    None = 0,
+    D3D9 = 1,
+    D3D10 = 2,
+    D3D11 = 3,
+    D3D12 = 4,
+    OpenGL = 5,
+    Vulkan = 6,
+    Auto = 7,
+}
+
+
+===== D:\User Projects\Kiero.Net\Native\Kiero\KieroStatus.cs =====
+
+namespace Kiero.Net;
+
+public enum KieroStatus
+{
+    UnknownError = -1,
+    NotSupportedError = -2,
+    ModuleNotFoundError = -3,
+    AlreadyInitializedError = -4,
+    NotInitializedError = -5,
+    Success = 0,
+}
+
+
+===== D:\User Projects\Kiero.Net\Native\Minhook\MinHook.cs =====
+
+using System.Runtime.InteropServices;
+
+namespace Kiero.Net;
+
+public static unsafe class MinHook
+{
+    private const string Lib = "minhook";
+
+    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+    public static extern int MH_Initialize();
+
+    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+    public static extern int MH_Uninitialize();
+
+    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+    public static extern int MH_CreateHook(void* target, void* detour, void** original);
+
+    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+    public static extern int MH_EnableHook(void* target);
+
+    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+    public static extern int MH_DisableHook(void* target);
+}
+
+
+===== D:\User Projects\Kiero.Net\Native\Source\Logger.cs =====
+
+#nullable enable
+using System;
+using System.IO;
+using System.Text;
+
+namespace Kiero.Net;
+
+public enum LogLevel
+{
+    Debug = 0,
+    Info = 1,
+    Warn = 2,
+    Error = 3,
+    None = 4,
+}
+
+public static class Logger
+{
+    private static readonly object sync = new();
+    private static StreamWriter? file;
+    private static LogLevel minLevel = LogLevel.Debug;
+    private static string? logPath;
+    private static long maxBytes = 10 * 1024 * 1024;
+    private static int maxFiles = 5;
+
+    public static LogLevel MinLevel
+    {
+        get => minLevel;
+        set => minLevel = value;
+    }
+
+    public static void Initialize(string? directory = null, string fileName = "Kiero.log")
+    {
+        lock (sync)
+        {
+            if (file != null) return;
+
+            try
+            {
+                directory ??= Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "Kiero.Net");
+
+                Directory.CreateDirectory(directory);
+
+                logPath = Path.Combine(directory, fileName);
+                RotateIfNeeded(logPath, maxBytes, maxFiles);
+
+                file = new StreamWriter(
+                    new FileStream(logPath, FileMode.Append, FileAccess.Write, FileShare.Read),
+                    new UTF8Encoding(false))
+                {
+                    AutoFlush = true,
+                };
+
+                WriteRaw(LogLevel.Info, "Logger", "========== session start ==========");
+            }
+            catch
+            {
+                file = null;
+            }
+        }
+    }
+
+    public static void Shutdown()
+    {
+        lock (sync)
+        {
+            if (file == null) return;
+
+            try
+            {
+                WriteRaw(LogLevel.Info, "Logger", "========== session end ==========");
+                file.Flush();
+                file.Dispose();
+            }
+            catch { }
+            finally
+            {
+                file = null;
+                logPath = null;
+            }
+        }
+    }
+
+    public static void Debug(string tag, string message) => Write(LogLevel.Debug, tag, message);
+    public static void Info(string tag, string message) => Write(LogLevel.Info, tag, message);
+    public static void Warn(string tag, string message) => Write(LogLevel.Warn, tag, message);
+    public static void Error(string tag, string message) => Write(LogLevel.Error, tag, message);
+
+    public static void Error(string tag, Exception ex)
+        => Write(LogLevel.Error, tag, $"{ex.GetType().Name}: {ex.Message}\n{ex.StackTrace}");
+
+    private static void Write(LogLevel level, string tag, string message)
+    {
+        if (level < minLevel) return;
+
+        lock (sync)
+        {
+            if (file == null) Initialize();
+            WriteRaw(level, tag, message);
+        }
+    }
+
+    private static void WriteRaw(LogLevel level, string tag, string message)
+    {
+        string stamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+        string prefix = level switch
+        {
+            LogLevel.Debug => "DBG",
+            LogLevel.Info => "INF",
+            LogLevel.Warn => "WRN",
+            LogLevel.Error => "ERR",
+            _ => "???",
+        };
+
+        string line = $"[{stamp}] {prefix} [{tag}] {message}";
+
+        try
+        {
+            file?.WriteLine(line);
+            file?.Flush();
+        }
+        catch { }
+
+        System.Diagnostics.Debug.WriteLine(line);
+    }
+
+    private static void RotateIfNeeded(string path, long maxBytes, int maxFiles)
+    {
+        try
+        {
+            if (!File.Exists(path)) return;
+            var fi = new FileInfo(path);
+            if (fi.Length < maxBytes) return;
+
+            string oldest = $"{path}.{maxFiles}";
+            if (File.Exists(oldest)) File.Delete(oldest);
+
+            for (int i = maxFiles - 1; i >= 1; i--)
+            {
+                string src = $"{path}.{i}";
+                string dst = $"{path}.{i + 1}";
+                if (File.Exists(src))
+                {
+                    if (File.Exists(dst)) File.Delete(dst);
+                    File.Move(src, dst);
+                }
+            }
+
+            File.Move(path, $"{path}.1");
+        }
+        catch { }
+    }
+}
+
+
+===== D:\User Projects\Kiero.Net\Native\Source\PresentHook.cs =====
+
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+
+namespace Kiero.Net;
+
+public static unsafe class PresentHook
+{
+    private static nint original;
+    private static long counter;
+
+    public static bool Install(nint addr)
+    {
+        if (addr == 0) return false;
+        if (MinHook.MH_Initialize() != 0) return false;
+
+        void* detour = (void*)(delegate* unmanaged[Stdcall]<nint, uint, uint, int>)&Detour;
+        void* orig = null;
+        int hr = MinHook.MH_CreateHook((void*)addr, detour, &orig);
+        if (hr != 0) return false;
+
+        original = (nint)orig;
+        MinHook.MH_EnableHook((void*)addr);
+        return true;
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvStdcall) })]
+    private static int Detour(nint sc, uint sync, uint flags)
+    {
+        long n = ++counter;
+        if (n == 1 || n % 300 == 0)
+            Logger.Info("Present", $"#{n} sc=0x{sc:X}");
+
+        return ((delegate* unmanaged[Stdcall]<nint, uint, uint, int>)original)(sc, sync, flags);
+    }
+}
+
+
+===== D:\User Projects\Kiero.Net\Kiero.Net.csproj =====
+
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <OutputType>Library</OutputType>
+    <AssemblyName>Kiero.Net</AssemblyName>
+    <RootNamespace>Kiero.Net</RootNamespace>
+  </PropertyGroup>
+</Project>
+
+
+===== D:\User Projects\Kiero.Net\Kiero.Net.sln =====
+
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.37314.3 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kiero.Net", "Kiero.Net.csproj", "{C03852F3-DBB7-46F0-959F-5A4A6AB69BBB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kiero.Net.Example", "..\Kiero.Net.Example\Kiero.Net.Example.csproj", "{CE794F9A-C2AD-40F9-B1D6-97939D2E0BEF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C03852F3-DBB7-46F0-959F-5A4A6AB69BBB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C03852F3-DBB7-46F0-959F-5A4A6AB69BBB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C03852F3-DBB7-46F0-959F-5A4A6AB69BBB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C03852F3-DBB7-46F0-959F-5A4A6AB69BBB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CE794F9A-C2AD-40F9-B1D6-97939D2E0BEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CE794F9A-C2AD-40F9-B1D6-97939D2E0BEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CE794F9A-C2AD-40F9-B1D6-97939D2E0BEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CE794F9A-C2AD-40F9-B1D6-97939D2E0BEF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9230D910-F776-4E53-9BEC-F686106E11DE}
+	EndGlobalSection
+EndGlobal
+
