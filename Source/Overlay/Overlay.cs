@@ -8,19 +8,23 @@ public static unsafe class Overlay
     private const uint dxgiPresentTest = 0x1;
 
     public static Action onDraw { get; set; }
+    public static Action onInput { get; set; }
     public static bool isReady => ready;
+    internal static nint Dx11SwapChain => swapChain;
+    internal static Dx11Backend Dx11Backend => backend;
 
     private static readonly object gate = new();
-    private static Dx11Backend backend;
     private static nint context;
     private static nint swapChain;
     private static volatile bool ready;
     private static volatile bool initAttempted;
     private static volatile bool started;
     private static long lastTicks;
-    private static OverlayMode mode = OverlayMode.Auto;
     private static bool useWin32Backend;
     private static int skipLogCount;
+
+    private static OverlayMode mode = OverlayMode.Auto;
+    private static Dx11Backend backend;
 
     public static void Initialize(OverlayMode overlayMode = OverlayMode.Auto)
     {
@@ -140,10 +144,12 @@ public static unsafe class Overlay
         }
     }
 
+
+
     private static void RenderFrame(nint sc)
     {
         float w, h;
-        if (!GetSize(sc, out w, out h)) return;
+        if (!backend.TryGetSize(sc, out w, out h)) return;
         if (w <= 0 || h <= 0) return;
 
         long now = Stopwatch.GetTimestamp();
@@ -158,8 +164,11 @@ public static unsafe class Overlay
             ImGui.ImplWin32NewFrame();
 
         backend.NewFrame();
+
         ImGui.IOSetDisplaySize(io, w, h);
         ImGui.IOSetDeltaTime(io, dt);
+
+        try { onInput?.Invoke(); } catch { }
 
         ImGui.NewFrame();
         try { onDraw?.Invoke(); } catch { }
@@ -170,16 +179,5 @@ public static unsafe class Overlay
         if (ImGui.DrawDataVtxCount(dd) <= 0) return;
 
         backend.RenderDrawData(dd);
-    }
-
-    private static bool GetSize(nint sc, out float w, out float h)
-    {
-        w = h = 0;
-        byte* desc = stackalloc byte[128];
-        var getDesc = (delegate* unmanaged[Stdcall]<nint, void*, int>)((*(void***)sc)[12]);
-        if (getDesc(sc, desc) < 0) return false;
-        w = *(uint*)(desc + 0);
-        h = *(uint*)(desc + 4);
-        return true;
     }
 }

@@ -4,10 +4,11 @@ namespace Kiero.Net;
 
 public static unsafe class Dx11PresentFinder
 {
-    public static bool TryGet(out nint present, out nint present1)
+    public static bool TryGet(out nint present, out nint present1, out nint resizeBuffers)
     {
         present = 0;
         present1 = 0;
+        resizeBuffers = 0;
 
         nint hwnd = Win32.CreateWindowExW(0, "STATIC", "kiero-dummy", 0, 0, 0, 1, 1, 0, 0, 0, 0);
         if (hwnd == 0) return false;
@@ -44,6 +45,7 @@ public static unsafe class Dx11PresentFinder
             {
                 nint vt = *(nint*)sc;
                 present = *(nint*)(vt + 8 * IntPtr.Size);
+                resizeBuffers = *(nint*)(vt + 13 * IntPtr.Size);
 
                 nint sc1 = 0;
                 Guid iid = Guids.IID_IDXGISwapChain1;

@@ -56,6 +56,8 @@ internal sealed unsafe class Dx11Backend
 
     public void NewFrame() => ImGui.ImplDX11NewFrame();
 
+    public void ReleaseRenderTarget() { if (rtv != 0) { Com.Release(rtv); rtv = 0; } rtvBb = 0; }
+
     public void RenderDrawData(nint drawData)
     {
         if (!ready || drawData == 0) return;
@@ -98,8 +100,7 @@ internal sealed unsafe class Dx11Backend
 
     public void Shutdown()
     {
-        if (rtv != 0) { Com.Release(rtv); rtv = 0; }
-        rtvBb = 0;
+        ReleaseRenderTarget();
         if (ready)
         {
             try { ImGui.ImplDX11Shutdown(); } catch { }
@@ -124,5 +125,16 @@ internal sealed unsafe class Dx11Backend
         var getBuffer = (delegate* unmanaged[Stdcall]<nint, uint, Guid*, nint*, int>)((*(void***)sc)[VT_GetBuffer]);
         Guid iid = Guids.IID_ID3D11Texture2D;
         return getBuffer(sc, idx, &iid, &bb) < 0 ? 0 : bb;
+    }
+
+    public bool TryGetSize(nint sc, out float w, out float h)
+    {
+        w = h = 0;
+        byte* desc = stackalloc byte[128];
+        var getDesc = (delegate* unmanaged[Stdcall]<nint, void*, int>)((*(void***)sc)[12]);
+        if (getDesc(sc, desc) < 0) return false;
+        w = *(uint*)(desc + 0);
+        h = *(uint*)(desc + 4);
+        return true;
     }
 }
