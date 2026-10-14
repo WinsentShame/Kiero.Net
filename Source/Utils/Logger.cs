@@ -18,16 +18,11 @@ public static class Logger
 {
     private static readonly object sync = new();
     private static StreamWriter? file;
-    private static LogLevel minLevel = LogLevel.Debug;
     private static string? logPath;
     private static long maxBytes = 10 * 1024 * 1024;
     private static int maxFiles = 5;
 
-    public static LogLevel MinLevel
-    {
-        get => minLevel;
-        set => minLevel = value;
-    }
+    public static LogLevel minLevel { get; set; } = LogLevel.Debug;
 
     public static void Initialize(string? directory = null, string fileName = "Kiero.log")
     {
@@ -126,7 +121,7 @@ public static class Logger
         System.Diagnostics.Debug.WriteLine(line);
     }
 
-    private static void RotateIfNeeded(string path, long maxBytes, int maxFiles)
+    private static void RotateIfNeeded(string path, long maxBytes, long maxFiles)
     {
         try
         {
@@ -137,7 +132,7 @@ public static class Logger
             string oldest = $"{path}.{maxFiles}";
             if (File.Exists(oldest)) File.Delete(oldest);
 
-            for (int i = maxFiles - 1; i >= 1; i--)
+            for (int i = (int)maxFiles - 1; i >= 1; i--)
             {
                 string src = $"{path}.{i}";
                 string dst = $"{path}.{i + 1}";

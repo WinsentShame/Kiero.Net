@@ -4,20 +4,20 @@ namespace Kiero.Net;
 
 public static unsafe class MinHook
 {
-    private const string Lib = "minhook";
+    private const string lib = "minhook";
 
-    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int MH_Initialize();
+    [DllImport(lib, CallingConvention = CallingConvention.Cdecl, EntryPoint = "MH_Initialize")]
+    public static extern int Initialize();
 
-    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int MH_Uninitialize();
+    [DllImport(lib, CallingConvention = CallingConvention.Cdecl, EntryPoint = "MH_Uninitialize")]
+    public static extern int Uninitialize();
 
-    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int MH_CreateHook(void* target, void* detour, void** original);
+    [DllImport(lib, CallingConvention = CallingConvention.Cdecl, EntryPoint = "MH_CreateHook")]
+    public static extern int CreateHook(void* target, void* detour, void** original);
 
-    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int MH_EnableHook(void* target);
+    [DllImport(lib, CallingConvention = CallingConvention.Cdecl, EntryPoint = "MH_EnableHook")]
+    public static extern int EnableHook(void* target);
 
-    [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-    public static extern int MH_DisableHook(void* target);
+    [DllImport(lib, CallingConvention = CallingConvention.Cdecl, EntryPoint = "MH_DisableHook")]
+    public static extern int DisableHook(void* target);
 }
