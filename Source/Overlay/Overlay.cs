@@ -25,7 +25,7 @@ public static unsafe class Overlay
     private static volatile bool started;
     private static long lastTicks;
     private static bool useWin32Backend;
-    private static int skipLogCount;
+    private static bool queueWaitLogged;
 
     private static OverlayMode mode = OverlayMode.Auto;
     private static RenderApi api = RenderApi.None;
@@ -59,21 +59,21 @@ public static unsafe class Overlay
 
         if (Kiero.GetRenderType() == KieroRenderType.D3D12 && ExecuteCommandListsHook.LastQueue == 0)
         {
-            if (skipLogCount++ < 3)
+            if (!queueWaitLogged)
+            {
+                queueWaitLogged = true;
                 Logger.Info("Overlay", "DX12 queue not captured yet, defer");
-            return false;   
+            }
+            return false;
         }
 
         initAttempted = true;
 
-        byte* desc = stackalloc byte[128];
-        var getDesc = (delegate* unmanaged[Stdcall]<nint, void*, int>)((*(void***)sc)[12]);
-        if (getDesc(sc, desc) < 0) { Logger.Error("Overlay", "GetDesc failed"); return false; }
-
-        uint w = *(uint*)(desc + 0);
-        uint h = *(uint*)(desc + 4);
-        uint fmt = *(uint*)(desc + 16);
-        nint hwnd = *(nint*)(desc + 48);
+        if (!Dxgi.TryGetDesc(sc, out uint w, out uint h, out uint fmt, out nint hwnd))
+        {
+            Logger.Error("Overlay", "GetDesc failed");
+            return false;
+        }
 
         if (w < 64 || h < 64) { Logger.Error("Overlay", $"too small {w}x{h}"); return false; }
 
@@ -150,16 +150,9 @@ public static unsafe class Overlay
 
     private static void RenderFrame(nint sc)
     {
-        float w, h;
-        if (api == RenderApi.Dx11)
-        {
-            if (!backend11.TryGetSize(sc, out w, out h)) return;
-        }
-        else
-        {
-            if (!TryGetSize(sc, out w, out h)) return;
-        }
-        if (w <= 0 || h <= 0) return;
+        if (!Dxgi.TryGetSize(sc, out uint wu, out uint hu)) return;
+        if (wu == 0 || hu == 0) return;
+        float w = wu, h = hu;
 
         long now = Stopwatch.GetTimestamp();
         float dt = (float)((now - lastTicks) / (double)Stopwatch.Frequency);
@@ -190,17 +183,6 @@ public static unsafe class Overlay
 
         if (api == RenderApi.Dx11) backend11.RenderDrawData(dd);
         else backend12.RenderDrawData(dd);
-    }
-
-    private static bool TryGetSize(nint sc, out float w, out float h)
-    {
-        w = h = 0;
-        byte* desc = stackalloc byte[128];
-        var getDesc = (delegate* unmanaged[Stdcall]<nint, void*, int>)((*(void***)sc)[12]);
-        if (getDesc(sc, desc) < 0) return false;
-        w = *(uint*)(desc + 0);
-        h = *(uint*)(desc + 4);
-        return true;
     }
 }
 

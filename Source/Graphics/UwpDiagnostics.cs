@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 
-namespace Kiero.Net.Example;
+namespace Kiero.Net;
 
 public static unsafe class UwpDiagnostics
 {

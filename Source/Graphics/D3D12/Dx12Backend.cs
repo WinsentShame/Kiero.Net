@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading;
 
 namespace Kiero.Net;
 
@@ -9,7 +8,6 @@ internal sealed unsafe class Dx12Backend
     private const int RTV_HEAP_SIZE = 3;
     private const int SRV_HEAP_SIZE = 64;
 
-    private const int VT_DEV_CREATE_QUEUE = 8;
     private const int VT_DEV_CREATE_ALLOC = 9;
     private const int VT_DEV_CREATE_LIST = 12;
     private const int VT_DEV_CREATE_HEAP = 14;
@@ -25,10 +23,6 @@ internal sealed unsafe class Dx12Backend
     private const int VT_LIST_BARRIER = 26;
     private const int VT_LIST_SET_DESCRIPTOR_HEAPS = 28;
     private const int VT_LIST_OMSETRT = 46;
-
-    private const int VT_FENCE_GET_COMPLETED = 10;
-    private const int VT_HEAP_GET_CPU_START = 9;
-    private const int VT_SWAPCHAIN_GET_CURRENT_BACK_BUFFER = 36;
 
     private nint swapChain;
     private nint device;
@@ -74,25 +68,6 @@ internal sealed unsafe class Dx12Backend
         queue = ExecuteCommandListsHook.LastQueue;
         Logger.Info("Dx12", $"queue=0x{queue:X} (from hook)");
 
-        //if (ExecuteCommandListsHook.LastQueue != 0)
-        //{
-        //    queue = ExecuteCommandListsHook.LastQueue;
-        //    Logger.Info("Dx12", $"queue=0x{queue:X} (from hook)");
-        //}
-        //else
-        //{
-        //    Logger.Warn("Dx12", "no queue from hook, creating own");
-        //    var qdesc = new D3D12Structs.D3D12_COMMAND_QUEUE_DESC { Type = D3D12Structs.COMMAND_LIST_TYPE_DIRECT };
-        //    nint vtDev0 = *(nint*)device;
-        //    var createQueue = (delegate* unmanaged[Stdcall]<nint, D3D12Structs.D3D12_COMMAND_QUEUE_DESC*, Guid*, nint*, int>)(*(nint*)(vtDev0 + VT_DEV_CREATE_QUEUE * IntPtr.Size));
-        //    Guid iidQueue = Guids.IID_ID3D12CommandQueue;
-        //    nint q = 0;
-        //    hr = createQueue(device, &qdesc, &iidQueue, &q);
-        //    if (hr < 0 || q == 0) { Logger.Error("Dx12", $"CreateQueue hr=0x{hr:X8}"); return false; }
-        //    queue = q;
-        //    Logger.Info("Dx12", $"queue=0x{queue:X} (created)");
-        //}
-
         nint vtDev = *(nint*)device;
         Guid iidHeap = Guids.IID_ID3D12DescriptorHeap;
         var createHeap = (delegate* unmanaged[Stdcall]<nint, D3D12Structs.D3D12_DESCRIPTOR_HEAP_DESC*, Guid*, nint*, int>)(*(nint*)(vtDev + VT_DEV_CREATE_HEAP * IntPtr.Size));
@@ -115,19 +90,7 @@ internal sealed unsafe class Dx12Backend
         rtvSize = getInc(device, D3D12Structs.HEAP_TYPE_RTV);
         Logger.Info("Dx12", $"rtvSize={rtvSize}");
 
-        //nint vtRtvHeap = *(nint*)rtvHeap;
-        //Logger.Info("Dx12", $"rtvHeap vt=0x{vtRtvHeap:X}");
-
-        //nint getCpuStartAddr = *(nint*)(vtRtvHeap + VT_HEAP_GET_CPU_START * IntPtr.Size);
-        //Logger.Info("Dx12", $"getCpuStartAddr=0x{getCpuStartAddr:X}");
-
-        //var getCpuStart = (delegate* unmanaged[Stdcall]<nint, nuint>)getCpuStartAddr;
-        //nuint h = getCpuStart(rtvHeap);
-        //Logger.Info("Dx12", $"rtvHeapCpuStart=0x{h:X}");
-
-        //rtvHeapCpuStart = h;
-
-        rtvHeapCpuStart = (nuint)Kiero.GetCpuHandle(rtvHeap);
+        rtvHeapCpuStart = (nuint)D3D12Shim.GetCpuHandle(rtvHeap);
         Logger.Info("Dx12", $"rtvHeapCpuStart=0x{rtvHeapCpuStart:X}");
 
         var srvDesc = new D3D12Structs.D3D12_DESCRIPTOR_HEAP_DESC
@@ -195,14 +158,6 @@ internal sealed unsafe class Dx12Backend
 
         int fi = frameIndex;
 
-        //if (fenceValues[fi] != 0)
-        //{
-        //    nint vtFence = *(nint*)fence;
-        //    var getCompleted = (delegate* unmanaged[Stdcall]<nint, ulong>)(*(nint*)(vtFence + VT_FENCE_GET_COMPLETED * IntPtr.Size));
-        //    while (getCompleted(fence) < fenceValues[fi])
-        //        Thread.Sleep(0);
-        //}
-
         nint vtAlloc = *(nint*)allocators[fi];
         var allocReset = (delegate* unmanaged[Stdcall]<nint, int>)(*(nint*)(vtAlloc + 8 * IntPtr.Size));
         allocReset(allocators[fi]);
@@ -212,13 +167,11 @@ internal sealed unsafe class Dx12Backend
         var listReset = (delegate* unmanaged[Stdcall]<nint, nint, nint, int>)(*(nint*)(vtList + VT_LIST_RESET * IntPtr.Size));
         listReset(cmdList, allocators[fi], 0);
 
-        uint idx = GetCurrentBackBufferIndex(swapChain);
+        uint idx = Dxgi.GetCurrentBackBufferIndex(swapChain);
         if (idx >= RTV_HEAP_SIZE) idx = 0;
 
-        nint backbuffer = 0;
-        var getBuffer = (delegate* unmanaged[Stdcall]<nint, uint, Guid*, nint*, int>)((*(void***)swapChain)[9]);
-        Guid iidRes = Guids.IID_ID3D12Resource;
-        if (getBuffer(swapChain, idx, &iidRes, &backbuffer) < 0 || backbuffer == 0) return;
+        nint backbuffer = Dxgi.GetBackBuffer(swapChain, idx, Guids.IID_ID3D12Resource);
+        if (backbuffer == 0) return;
 
         try
         {
@@ -279,19 +232,7 @@ internal sealed unsafe class Dx12Backend
         }
     }
 
-    public void ReleaseRenderTarget() { }
+    //public void ReleaseRenderTarget() { }
 
-    public void Shutdown()
-    {
-        ready = false;
-    }
-
-    private static uint GetCurrentBackBufferIndex(nint sc)
-    {
-        nint vt = *(nint*)sc;
-        nint addr = *(nint*)(vt + VT_SWAPCHAIN_GET_CURRENT_BACK_BUFFER * IntPtr.Size);
-        if (addr == 0) return 0;
-        var fn = (delegate* unmanaged[Stdcall]<nint, uint>)addr;
-        return fn(sc);
-    }
+    public void Shutdown() => ready = false;
 }

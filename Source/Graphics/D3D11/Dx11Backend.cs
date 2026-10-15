@@ -4,13 +4,10 @@ namespace Kiero.Net;
 
 internal sealed unsafe class Dx11Backend
 {
-    private const int VT_GetBuffer = 9;
     private const int VT_GetDevice = 3;
-    private const int VT_GetImmediateContext = 40;
     private const int VT_CreateRenderTargetView = 9;
     private const int VT_OMSetRenderTargets = 33;
-    private const int VT_GetCurrentBackBufferIndex = 36;
-    private const int VT_LIST_SET_DESCRIPTOR_HEAPS = 28;
+    private const int VT_GetImmediateContext = 40;
 
     private nint swapChain;
     private nint device;
@@ -27,7 +24,7 @@ internal sealed unsafe class Dx11Backend
         swapChain = sc;
         Logger.Info("Dx11", $"Init sc=0x{sc:X}");
 
-        nint bb = GetBackBuffer(sc, 0);
+        nint bb = Dxgi.GetBackBuffer(sc, 0, Guids.IID_ID3D11Texture2D);
         if (bb == 0) { Logger.Error("Dx11", "backbuffer=0"); return false; }
 
         nint dev = 0;
@@ -63,8 +60,8 @@ internal sealed unsafe class Dx11Backend
     {
         if (!ready || drawData == 0) return;
 
-        uint IDX = GetCurrentBackBufferIndex(swapChain);
-        nint bb = GetBackBuffer(swapChain, IDX);
+        uint IDX = Dxgi.GetCurrentBackBufferIndex(swapChain);
+        nint bb = Dxgi.GetBackBuffer(swapChain, IDX, Guids.IID_ID3D11Texture2D);
         if (bb == 0) return;
 
         try
@@ -109,33 +106,5 @@ internal sealed unsafe class Dx11Backend
         }
         if (context != 0) { Com.Release(context); context = 0; }
         if (device != 0) { Com.Release(device); device = 0; }
-    }
-
-    private static uint GetCurrentBackBufferIndex(nint sc)
-    {
-        nint vt = *(nint*)sc;
-        nint addr = *(nint*)(vt + VT_GetCurrentBackBufferIndex * IntPtr.Size);
-        if (addr == 0) return 0;
-        var fn = (delegate* unmanaged[Stdcall]<nint, uint>)addr;
-        return fn(sc);
-    }
-
-    private static nint GetBackBuffer(nint sc, uint idx)
-    {
-        nint bb = 0;
-        var getBuffer = (delegate* unmanaged[Stdcall]<nint, uint, Guid*, nint*, int>)((*(void***)sc)[VT_GetBuffer]);
-        Guid iid = Guids.IID_ID3D11Texture2D;
-        return getBuffer(sc, idx, &iid, &bb) < 0 ? 0 : bb;
-    }
-
-    public bool TryGetSize(nint sc, out float w, out float h)
-    {
-        w = h = 0;
-        byte* desc = stackalloc byte[128];
-        var getDesc = (delegate* unmanaged[Stdcall]<nint, void*, int>)((*(void***)sc)[12]);
-        if (getDesc(sc, desc) < 0) return false;
-        w = *(uint*)(desc + 0);
-        h = *(uint*)(desc + 4);
-        return true;
     }
 }

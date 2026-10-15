@@ -1,5 +1,4 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 
@@ -7,7 +6,6 @@ namespace Kiero.Net;
 
 public static unsafe class ExecuteCommandListsHook
 {
-    private const int VT_QUEUE_GET_DESC = 18;
     private const int COMMAND_LIST_TYPE_DIRECT = 0;
 
     private static nint original;
@@ -35,7 +33,7 @@ public static unsafe class ExecuteCommandListsHook
     {
         if (queue != 0 && lastQueue == 0)
         {
-            int type = Kiero.QueueGetType(queue);
+            int type = D3D12Shim.QueueGetType(queue);
             if (type == COMMAND_LIST_TYPE_DIRECT)
             {
                 lastQueue = queue;

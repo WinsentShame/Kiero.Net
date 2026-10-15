@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.InteropServices;
 
 namespace Kiero.Net;
 
@@ -23,6 +22,7 @@ public static unsafe class Dx12ExecuteCommandListsFinder
             nint vtFactory = *(nint*)factory;
             var enumAdapters = (delegate* unmanaged[Stdcall]<nint, uint, nint*, int>)(*(nint*)(vtFactory + 12 * IntPtr.Size));
 
+            byte* desc = stackalloc byte[0x140];
             for (uint i = 0; i < 8; i++)
             {
                 nint a = 0;
@@ -31,7 +31,6 @@ public static unsafe class Dx12ExecuteCommandListsFinder
                 nint vtA = *(nint*)a;
                 var getDesc = (delegate* unmanaged[Stdcall]<nint, void*, int>)(*(nint*)(vtA + 10 * IntPtr.Size));
 
-                byte* desc = stackalloc byte[0x140];
                 for (int b = 0; b < 0x140; b++) desc[b] = 0;
 
                 if (getDesc(a, desc) >= 0)
