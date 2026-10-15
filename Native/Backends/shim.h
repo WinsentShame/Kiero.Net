@@ -523,6 +523,23 @@ extern "C" {
 	void shim_ImplDX12_InvalidateDeviceObjects();
 
 	// ============================================================
+	// D3D12 HELPERS (ABI-safe wrappers for C#)
+	// ============================================================
+	unsigned long long shim_D3D12_GetCPUDescriptorHandleForHeapStart(void* heap);
+	unsigned long long shim_D3D12_GetGPUDescriptorHandleForHeapStart(void* heap);
+	void shim_D3D12_CreateRenderTargetView(void* device, void* resource, void* desc, unsigned long long cpuHandle);
+	void shim_D3D12_OMSetRenderTargets(void* cmdList, unsigned int numRTVs, unsigned long long* rtvHandles, void* dsv);
+	void shim_D3D12_ResourceBarrier(void* cmdList, unsigned int num, void* barriers);
+	void shim_D3D12_CommandListReset(void* cmdList, void* allocator, void* pso);
+	int  shim_D3D12_CommandListClose(void* cmdList);
+	int  shim_D3D12_CommandAllocatorReset(void* allocator);
+	void shim_D3D12_ExecuteCommandLists(void* queue, unsigned int numLists, void** lists);
+	int  shim_D3D12_QueueSignal(void* queue, void* fence, unsigned long long value);
+	unsigned long long shim_D3D12_FenceGetCompletedValue(void* fence);
+	void shim_D3D12_SetDescriptorHeaps(void* cmdList, unsigned int numHeaps, void** heaps);\
+	int shim_D3D12_CommandQueueGetType(void* queue);
+
+	// ============================================================
 	// WIN32 BACKEND
 	// ============================================================
 	bool     shim_ImplWin32_Init(void* hwnd);

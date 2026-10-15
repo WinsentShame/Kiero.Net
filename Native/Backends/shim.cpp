@@ -584,6 +584,82 @@
 		ImGui_ImplDX12_InvalidateDeviceObjects();
 	}
 
+
+	// ============================================================
+	// D3D12 HELPERS
+	// ============================================================
+	unsigned long long shim_D3D12_GetCPUDescriptorHandleForHeapStart(void* heap)
+	{
+		return (unsigned long long)((ID3D12DescriptorHeap*)heap)->GetCPUDescriptorHandleForHeapStart().ptr;
+	}
+
+	unsigned long long shim_D3D12_GetGPUDescriptorHandleForHeapStart(void* heap)
+	{
+		return (unsigned long long)((ID3D12DescriptorHeap*)heap)->GetGPUDescriptorHandleForHeapStart().ptr;
+	}
+
+	void shim_D3D12_CreateRenderTargetView(void* device, void* resource, void* desc, unsigned long long cpuHandle)
+	{
+		D3D12_CPU_DESCRIPTOR_HANDLE h;
+		h.ptr = (SIZE_T)cpuHandle;
+		((ID3D12Device*)device)->CreateRenderTargetView((ID3D12Resource*)resource, (const D3D12_RENDER_TARGET_VIEW_DESC*)desc, h);
+	}
+
+	void shim_D3D12_OMSetRenderTargets(void* cmdList, unsigned int numRTVs, unsigned long long* rtvHandles, void* dsv)
+	{
+		D3D12_CPU_DESCRIPTOR_HANDLE handles[8];
+		unsigned int n = numRTVs > 8 ? 8 : numRTVs;
+		for (unsigned int i = 0; i < n; i++) handles[i].ptr = (SIZE_T)rtvHandles[i];
+		D3D12_CPU_DESCRIPTOR_HANDLE* dsvHandle = dsv ? (D3D12_CPU_DESCRIPTOR_HANDLE*)dsv : nullptr;
+		((ID3D12GraphicsCommandList*)cmdList)->OMSetRenderTargets(n, handles, FALSE, dsvHandle);
+	}
+
+	void shim_D3D12_ResourceBarrier(void* cmdList, unsigned int num, void* barriers)
+	{
+		((ID3D12GraphicsCommandList*)cmdList)->ResourceBarrier(num, (const D3D12_RESOURCE_BARRIER*)barriers);
+	}
+
+	void shim_D3D12_CommandListReset(void* cmdList, void* allocator, void* pso)
+	{
+		((ID3D12GraphicsCommandList*)cmdList)->Reset((ID3D12CommandAllocator*)allocator, (ID3D12PipelineState*)pso);
+	}
+
+	int shim_D3D12_CommandListClose(void* cmdList)
+	{
+		return (int)((ID3D12GraphicsCommandList*)cmdList)->Close();
+	}
+
+	int shim_D3D12_CommandAllocatorReset(void* allocator)
+	{
+		return (int)((ID3D12CommandAllocator*)allocator)->Reset();
+	}
+
+	void shim_D3D12_ExecuteCommandLists(void* queue, unsigned int numLists, void** lists)
+	{
+		((ID3D12CommandQueue*)queue)->ExecuteCommandLists(numLists, (ID3D12CommandList* const*)lists);
+	}
+
+	int shim_D3D12_QueueSignal(void* queue, void* fence, unsigned long long value)
+	{
+		return (int)((ID3D12CommandQueue*)queue)->Signal((ID3D12Fence*)fence, value);
+	}
+
+	unsigned long long shim_D3D12_FenceGetCompletedValue(void* fence)
+	{
+		return ((ID3D12Fence*)fence)->GetCompletedValue();
+	}
+
+	void shim_D3D12_SetDescriptorHeaps(void* cmdList, unsigned int numHeaps, void** heaps)
+	{
+		((ID3D12GraphicsCommandList*)cmdList)->SetDescriptorHeaps(numHeaps, (ID3D12DescriptorHeap* const*)heaps);
+	}
+
+	int shim_D3D12_CommandQueueGetType(void* queue)
+	{
+		D3D12_COMMAND_QUEUE_DESC d = ((ID3D12CommandQueue*)queue)->GetDesc();
+		return (int)d.Type;
+	}
+
 	// ============================================================
 	// WIN32 BACKEND
 	// ============================================================

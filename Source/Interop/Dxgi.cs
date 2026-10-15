@@ -5,7 +5,10 @@ namespace Kiero.Net;
 public static unsafe class Dxgi
 {
     public const uint FormatR8G8B8A8Unorm = 28;
+    public const uint FormatB8G8R8A8Unorm = 87;
     public const uint UsageRenderTargetOutput = 0x20;
+
+    public const int ErrorNotFound = unchecked((int)0x887A0002);
 
     [StructLayout(LayoutKind.Sequential)]
     public struct ModeDesc

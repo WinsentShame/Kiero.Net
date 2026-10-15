@@ -10,6 +10,7 @@ internal sealed unsafe class Dx11Backend
     private const int VT_CreateRenderTargetView = 9;
     private const int VT_OMSetRenderTargets = 33;
     private const int VT_GetCurrentBackBufferIndex = 36;
+    private const int VT_LIST_SET_DESCRIPTOR_HEAPS = 28;
 
     private nint swapChain;
     private nint device;

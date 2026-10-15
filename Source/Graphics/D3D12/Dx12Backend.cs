@@ -1,0 +1,297 @@
+﻿using System;
+using System.Threading;
+
+namespace Kiero.Net;
+
+internal sealed unsafe class Dx12Backend
+{
+    private const int FRAMES_IN_FLIGHT = 2;
+    private const int RTV_HEAP_SIZE = 3;
+    private const int SRV_HEAP_SIZE = 64;
+
+    private const int VT_DEV_CREATE_QUEUE = 8;
+    private const int VT_DEV_CREATE_ALLOC = 9;
+    private const int VT_DEV_CREATE_LIST = 12;
+    private const int VT_DEV_CREATE_HEAP = 14;
+    private const int VT_DEV_GET_INC = 15;
+    private const int VT_DEV_CREATE_RTV = 20;
+    private const int VT_DEV_CREATE_FENCE = 36;
+
+    private const int VT_QUEUE_EXEC = 10;
+    private const int VT_QUEUE_SIGNAL = 14;
+
+    private const int VT_LIST_CLOSE = 9;
+    private const int VT_LIST_RESET = 10;
+    private const int VT_LIST_BARRIER = 26;
+    private const int VT_LIST_SET_DESCRIPTOR_HEAPS = 28;
+    private const int VT_LIST_OMSETRT = 46;
+
+    private const int VT_FENCE_GET_COMPLETED = 10;
+    private const int VT_HEAP_GET_CPU_START = 9;
+    private const int VT_SWAPCHAIN_GET_CURRENT_BACK_BUFFER = 36;
+
+    private nint swapChain;
+    private nint device;
+    private nint queue;
+
+    private nint rtvHeap;
+    private uint rtvSize;
+    private nuint rtvHeapCpuStart;
+
+    private nint srvHeap;
+
+    private nint[] allocators = new nint[FRAMES_IN_FLIGHT];
+    private nint[] lists = new nint[FRAMES_IN_FLIGHT];
+    private nint fence;
+    private ulong[] fenceValues = new ulong[FRAMES_IN_FLIGHT];
+    private ulong fenceCounter;
+    private int frameIndex;
+
+    private bool ready;
+    private long frameCounter;
+
+    public bool isReady => ready;
+
+    public bool Init(nint sc, int rtvFormat)
+    {
+        swapChain = sc;
+        Logger.Info("Dx12", $"Init sc=0x{sc:X} rtvFormat={rtvFormat}");
+
+        nint vtSc = *(nint*)sc;
+        var getDevice = (delegate* unmanaged[Stdcall]<nint, Guid*, nint*, int>)(*(nint*)(vtSc + 7 * IntPtr.Size));
+        Guid iidDev = Guids.IID_ID3D12Device;
+        nint dev = 0;
+        int hr = getDevice(sc, &iidDev, &dev);
+        if (hr < 0 || dev == 0) { Logger.Error("Dx12", $"GetDevice hr=0x{hr:X8}"); return false; }
+        device = dev;
+        Logger.Info("Dx12", $"device=0x{dev:X}");
+
+        if (ExecuteCommandListsHook.LastQueue == 0)
+        {
+            Logger.Warn("Dx12", "queue not captured yet, defer");
+            return false;
+        }
+        queue = ExecuteCommandListsHook.LastQueue;
+        Logger.Info("Dx12", $"queue=0x{queue:X} (from hook)");
+
+        //if (ExecuteCommandListsHook.LastQueue != 0)
+        //{
+        //    queue = ExecuteCommandListsHook.LastQueue;
+        //    Logger.Info("Dx12", $"queue=0x{queue:X} (from hook)");
+        //}
+        //else
+        //{
+        //    Logger.Warn("Dx12", "no queue from hook, creating own");
+        //    var qdesc = new D3D12Structs.D3D12_COMMAND_QUEUE_DESC { Type = D3D12Structs.COMMAND_LIST_TYPE_DIRECT };
+        //    nint vtDev0 = *(nint*)device;
+        //    var createQueue = (delegate* unmanaged[Stdcall]<nint, D3D12Structs.D3D12_COMMAND_QUEUE_DESC*, Guid*, nint*, int>)(*(nint*)(vtDev0 + VT_DEV_CREATE_QUEUE * IntPtr.Size));
+        //    Guid iidQueue = Guids.IID_ID3D12CommandQueue;
+        //    nint q = 0;
+        //    hr = createQueue(device, &qdesc, &iidQueue, &q);
+        //    if (hr < 0 || q == 0) { Logger.Error("Dx12", $"CreateQueue hr=0x{hr:X8}"); return false; }
+        //    queue = q;
+        //    Logger.Info("Dx12", $"queue=0x{queue:X} (created)");
+        //}
+
+        nint vtDev = *(nint*)device;
+        Guid iidHeap = Guids.IID_ID3D12DescriptorHeap;
+        var createHeap = (delegate* unmanaged[Stdcall]<nint, D3D12Structs.D3D12_DESCRIPTOR_HEAP_DESC*, Guid*, nint*, int>)(*(nint*)(vtDev + VT_DEV_CREATE_HEAP * IntPtr.Size));
+
+        var rtvDesc = new D3D12Structs.D3D12_DESCRIPTOR_HEAP_DESC
+        {
+            Type = D3D12Structs.HEAP_TYPE_RTV,
+            NumDescriptors = RTV_HEAP_SIZE,
+            Flags = D3D12Structs.HEAP_FLAG_NONE,
+            NodeMask = 1,
+        };
+
+        nint rtvH = 0;
+        hr = createHeap(device, &rtvDesc, &iidHeap, &rtvH);
+        if (hr < 0 || rtvH == 0) { Logger.Error("Dx12", $"CreateRtvHeap hr=0x{hr:X8}"); return false; }
+        rtvHeap = rtvH;
+        Logger.Info("Dx12", $"rtvHeap=0x{rtvH:X}");
+
+        var getInc = (delegate* unmanaged[Stdcall]<nint, int, uint>)(*(nint*)(vtDev + VT_DEV_GET_INC * IntPtr.Size));
+        rtvSize = getInc(device, D3D12Structs.HEAP_TYPE_RTV);
+        Logger.Info("Dx12", $"rtvSize={rtvSize}");
+
+        //nint vtRtvHeap = *(nint*)rtvHeap;
+        //Logger.Info("Dx12", $"rtvHeap vt=0x{vtRtvHeap:X}");
+
+        //nint getCpuStartAddr = *(nint*)(vtRtvHeap + VT_HEAP_GET_CPU_START * IntPtr.Size);
+        //Logger.Info("Dx12", $"getCpuStartAddr=0x{getCpuStartAddr:X}");
+
+        //var getCpuStart = (delegate* unmanaged[Stdcall]<nint, nuint>)getCpuStartAddr;
+        //nuint h = getCpuStart(rtvHeap);
+        //Logger.Info("Dx12", $"rtvHeapCpuStart=0x{h:X}");
+
+        //rtvHeapCpuStart = h;
+
+        rtvHeapCpuStart = (nuint)Kiero.GetCpuHandle(rtvHeap);
+        Logger.Info("Dx12", $"rtvHeapCpuStart=0x{rtvHeapCpuStart:X}");
+
+        var srvDesc = new D3D12Structs.D3D12_DESCRIPTOR_HEAP_DESC
+        {
+            Type = D3D12Structs.HEAP_TYPE_CBV_SRV_UAV,
+            NumDescriptors = SRV_HEAP_SIZE,
+            Flags = D3D12Structs.HEAP_FLAG_SHADER_VISIBLE,
+            NodeMask = 0,
+        };
+
+        nint srvH = 0;
+        hr = createHeap(device, &srvDesc, &iidHeap, &srvH);
+        if (hr < 0 || srvH == 0) { Logger.Error("Dx12", $"CreateSrvHeap hr=0x{hr:X8}"); return false; }
+        srvHeap = srvH;
+        Logger.Info("Dx12", $"srvHeap=0x{srvH:X}");
+
+        Guid iidAlloc = Guids.IID_ID3D12CommandAllocator;
+        Guid iidList = Guids.IID_ID3D12GraphicsCommandList;
+        var createAlloc = (delegate* unmanaged[Stdcall]<nint, int, Guid*, nint*, int>)(*(nint*)(vtDev + VT_DEV_CREATE_ALLOC * IntPtr.Size));
+        var createList = (delegate* unmanaged[Stdcall]<nint, int, int, nint, nint, Guid*, nint*, int>)(*(nint*)(vtDev + VT_DEV_CREATE_LIST * IntPtr.Size));
+
+        for (int i = 0; i < FRAMES_IN_FLIGHT; i++)
+        {
+            nint alloc = 0;
+            hr = createAlloc(device, D3D12Structs.COMMAND_LIST_TYPE_DIRECT, &iidAlloc, &alloc);
+            if (hr < 0 || alloc == 0) { Logger.Error("Dx12", $"CreateAlloc[{i}] hr=0x{hr:X8}"); return false; }
+            allocators[i] = alloc;
+
+            nint list = 0;
+            hr = createList(device, 0, D3D12Structs.COMMAND_LIST_TYPE_DIRECT, alloc, 0, &iidList, &list);
+            if (hr < 0 || list == 0) { Logger.Error("Dx12", $"CreateList[{i}] hr=0x{hr:X8}"); return false; }
+            lists[i] = list;
+
+            nint vtList = *(nint*)list;
+            var close = (delegate* unmanaged[Stdcall]<nint, int>)(*(nint*)(vtList + VT_LIST_CLOSE * IntPtr.Size));
+            close(list);
+            Logger.Info("Dx12", $"alloc[{i}]=0x{alloc:X} list[{i}]=0x{list:X}");
+        }
+
+        Guid iidFence = Guids.IID_ID3D12Fence;
+        var createFence = (delegate* unmanaged[Stdcall]<nint, ulong, int, Guid*, nint*, int>)(*(nint*)(vtDev + VT_DEV_CREATE_FENCE * IntPtr.Size));
+        nint f = 0;
+        hr = createFence(device, 0, 0, &iidFence, &f);
+        if (hr < 0 || f == 0) { Logger.Error("Dx12", $"CreateFence hr=0x{hr:X8}"); return false; }
+        fence = f;
+        Logger.Info("Dx12", $"fence=0x{f:X}");
+
+        if (ImGui.ImplDX12Init(device, queue, FRAMES_IN_FLIGHT, rtvFormat, srvHeap, SRV_HEAP_SIZE) == 0)
+        {
+            Logger.Error("Dx12", "ImplDX12Init failed");
+            return false;
+        }
+        Logger.Info("Dx12", "ImplDX12Init ok");
+
+        ready = true;
+        Logger.Info("Dx12", "ready");
+        return true;
+    }
+
+    public void NewFrame() => ImGui.ImplDX12NewFrame();
+
+    public void RenderDrawData(nint drawData)
+    {
+        if (!ready || drawData == 0) return;
+
+        int fi = frameIndex;
+
+        //if (fenceValues[fi] != 0)
+        //{
+        //    nint vtFence = *(nint*)fence;
+        //    var getCompleted = (delegate* unmanaged[Stdcall]<nint, ulong>)(*(nint*)(vtFence + VT_FENCE_GET_COMPLETED * IntPtr.Size));
+        //    while (getCompleted(fence) < fenceValues[fi])
+        //        Thread.Sleep(0);
+        //}
+
+        nint vtAlloc = *(nint*)allocators[fi];
+        var allocReset = (delegate* unmanaged[Stdcall]<nint, int>)(*(nint*)(vtAlloc + 8 * IntPtr.Size));
+        allocReset(allocators[fi]);
+
+        nint cmdList = lists[fi];
+        nint vtList = *(nint*)cmdList;
+        var listReset = (delegate* unmanaged[Stdcall]<nint, nint, nint, int>)(*(nint*)(vtList + VT_LIST_RESET * IntPtr.Size));
+        listReset(cmdList, allocators[fi], 0);
+
+        uint idx = GetCurrentBackBufferIndex(swapChain);
+        if (idx >= RTV_HEAP_SIZE) idx = 0;
+
+        nint backbuffer = 0;
+        var getBuffer = (delegate* unmanaged[Stdcall]<nint, uint, Guid*, nint*, int>)((*(void***)swapChain)[9]);
+        Guid iidRes = Guids.IID_ID3D12Resource;
+        if (getBuffer(swapChain, idx, &iidRes, &backbuffer) < 0 || backbuffer == 0) return;
+
+        try
+        {
+            var rtvHandle = new D3D12Structs.D3D12_CPU_DESCRIPTOR_HANDLE { ptr = rtvHeapCpuStart + (nuint)(idx * rtvSize) };
+
+            nint vtDev = *(nint*)device;
+            var createRtv = (delegate* unmanaged[Stdcall]<nint, nint, nint, D3D12Structs.D3D12_CPU_DESCRIPTOR_HANDLE, void>)(*(nint*)(vtDev + VT_DEV_CREATE_RTV * IntPtr.Size));
+            createRtv(device, backbuffer, 0, rtvHandle);
+
+            var barrier = new D3D12Structs.D3D12_RESOURCE_BARRIER
+            {
+                Type = D3D12Structs.BARRIER_TYPE_TRANSITION,
+                Flags = 0,
+                Resource = backbuffer,
+                Subresource = D3D12Structs.ALL_SUBRESOURCES,
+                StateBefore = D3D12Structs.STATE_PRESENT,
+                StateAfter = D3D12Structs.STATE_RENDER_TARGET,
+            };
+            var resBarrier = (delegate* unmanaged[Stdcall]<nint, uint, D3D12Structs.D3D12_RESOURCE_BARRIER*, void>)(*(nint*)(vtList + VT_LIST_BARRIER * IntPtr.Size));
+            resBarrier(cmdList, 1, &barrier);
+
+            var omSet = (delegate* unmanaged[Stdcall]<nint, uint, D3D12Structs.D3D12_CPU_DESCRIPTOR_HANDLE*, int, nint, void>)(*(nint*)(vtList + VT_LIST_OMSETRT * IntPtr.Size));
+            D3D12Structs.D3D12_CPU_DESCRIPTOR_HANDLE h = rtvHandle;
+            omSet(cmdList, 1, &h, 0, 0);
+
+            var setHeaps = (delegate* unmanaged[Stdcall]<nint, uint, nint*, void>)(*(nint*)(vtList + VT_LIST_SET_DESCRIPTOR_HEAPS * IntPtr.Size));
+            nint srvHeapLocal = srvHeap;
+            setHeaps(cmdList, 1, &srvHeapLocal);
+
+            ImGui.ImplDX12RenderDrawData(drawData, cmdList);
+
+            barrier.StateBefore = D3D12Structs.STATE_RENDER_TARGET;
+            barrier.StateAfter = D3D12Structs.STATE_PRESENT;
+            resBarrier(cmdList, 1, &barrier);
+
+            var close = (delegate* unmanaged[Stdcall]<nint, int>)(*(nint*)(vtList + VT_LIST_CLOSE * IntPtr.Size));
+            close(cmdList);
+
+            nint vtQueue = *(nint*)queue;
+            var exec = (delegate* unmanaged[Stdcall]<nint, uint, nint*, void>)(*(nint*)(vtQueue + VT_QUEUE_EXEC * IntPtr.Size));
+            nint cl = cmdList;
+            exec(queue, 1, &cl);
+
+            ulong signalValue = ++fenceCounter;
+            var signal = (delegate* unmanaged[Stdcall]<nint, nint, ulong, int>)(*(nint*)(vtQueue + VT_QUEUE_SIGNAL * IntPtr.Size));
+            signal(queue, fence, signalValue);
+            fenceValues[fi] = signalValue;
+
+            frameIndex = (fi + 1) % FRAMES_IN_FLIGHT;
+
+            long N = ++frameCounter;
+            if (N == 1 || N % 600 == 0)
+                Logger.Info("Dx12", $"frame={N} idx={idx} bb=0x{backbuffer:X}");
+        }
+        finally
+        {
+            Com.Release(backbuffer);
+        }
+    }
+
+    public void ReleaseRenderTarget() { }
+
+    public void Shutdown()
+    {
+        ready = false;
+    }
+
+    private static uint GetCurrentBackBufferIndex(nint sc)
+    {
+        nint vt = *(nint*)sc;
+        nint addr = *(nint*)(vt + VT_SWAPCHAIN_GET_CURRENT_BACK_BUFFER * IntPtr.Size);
+        if (addr == 0) return 0;
+        var fn = (delegate* unmanaged[Stdcall]<nint, uint>)addr;
+        return fn(sc);
+    }
+}
