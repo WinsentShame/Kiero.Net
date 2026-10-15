@@ -666,4 +666,5 @@
 	bool shim_ImplWin32_Init(void* hwnd) { return ImGui_ImplWin32_Init(hwnd); }
 	void shim_ImplWin32_Shutdown() { ImGui_ImplWin32_Shutdown(); }
 	void shim_ImplWin32_NewFrame() { ImGui_ImplWin32_NewFrame(); }
+	//extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 

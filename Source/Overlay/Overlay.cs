@@ -14,7 +14,6 @@ public static unsafe class Overlay
     internal static Dx11Backend Dx11Backend => backend11;
     internal static Dx12Backend Dx12Backend => backend12;
 
-    public static bool UseWin32Backend => useWin32Backend;
     public static bool isReady => ready;
 
     private static readonly object gate = new();
@@ -24,7 +23,6 @@ public static unsafe class Overlay
     private static volatile bool initAttempted;
     private static volatile bool started;
     private static long lastTicks;
-    private static bool useWin32Backend;
     private static bool queueWaitLogged;
 
     private static OverlayMode mode = OverlayMode.Auto;
@@ -77,14 +75,6 @@ public static unsafe class Overlay
 
         if (w < 64 || h < 64) { Logger.Error("Overlay", $"too small {w}x{h}"); return false; }
 
-        bool wantWin32;
-        switch (mode)
-        {
-            case OverlayMode.Win32: wantWin32 = true; break;
-            case OverlayMode.Uwp: wantWin32 = false; break;
-            default: wantWin32 = hwnd != 0; break;
-        }
-
         Logger.Info("Overlay", $"InitImGui sc=0x{sc:X} {w}x{h} hwnd=0x{hwnd:X} mode={mode}");
 
         context = ImGui.CreateContext(0);
@@ -96,25 +86,6 @@ public static unsafe class Overlay
         nint io = ImGui.GetIO();
         if (io == 0) { Logger.Error("Overlay", "no io"); return false; }
         ImGui.IOSetIniFilename(io, null);
-
-        if (wantWin32)
-        {
-            if (ImGui.ImplWin32Init(hwnd) != 0)
-            {
-                useWin32Backend = true;
-                Logger.Info("Overlay", "Win32 backend initialized");
-            }
-            else
-            {
-                Logger.Warn("Overlay", "Win32Init failed, falling back to UWP mode");
-                useWin32Backend = false;
-            }
-        }
-        else
-        {
-            useWin32Backend = false;
-            Logger.Info("Overlay", "UWP mode: skipping Win32 backend");
-        }
 
         var kieroType = Kiero.GetRenderType();
         if (kieroType == KieroRenderType.D3D12)
@@ -144,7 +115,7 @@ public static unsafe class Overlay
         swapChain = sc;
         lastTicks = Stopwatch.GetTimestamp();
         ready = true;
-        Logger.Info("Overlay", $"ImGui ready (win32={useWin32Backend} api={api})");
+        Logger.Info("Overlay", $"ImGui ready (api={api})");
         return true;
     }
 
@@ -161,9 +132,6 @@ public static unsafe class Overlay
 
         ImGui.SetCurrentContext(context);
         nint io = ImGui.GetIO();
-
-        if (useWin32Backend)
-            ImGui.ImplWin32NewFrame();
 
         if (api == RenderApi.Dx11) backend11.NewFrame();
         else backend12.NewFrame();
