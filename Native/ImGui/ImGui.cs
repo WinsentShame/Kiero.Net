@@ -924,19 +924,11 @@ public static unsafe class ImGui
     [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImplWin32_NewFrame")]
     public static extern void ImplWin32NewFrame();
 
-
     [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImplDX12_Init")]
-    public static extern byte ImplDX12Init(
-        nint device,
-        nint queue,
-        int framesInFlight,
-        int rtvFormat,
-        nint srvHeap,
-        uint srvHeapSize);
+    public static extern byte ImplDX12Init(nint device, nint queue, int framesInFlight, int rtvFormat, nint srvHeap, uint srvHeapSize);
 
     [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImplDX12_Shutdown")]
     public static extern void ImplDX12Shutdown();
-
 
     [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImplDX12_NewFrame")]
     public static extern void ImplDX12NewFrame();

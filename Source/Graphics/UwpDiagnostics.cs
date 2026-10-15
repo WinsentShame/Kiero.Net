@@ -56,7 +56,7 @@ public static unsafe class UwpDiagnostics
             Logger.Info("UwpDiag", $"DCompositionCreateDevice=0x{addrCompDev:X}");
             if (addrCompDev != 0)
             {
-                void* det = (void*)(delegate* unmanaged[Stdcall]<nint, Guid*, nint*, int>)&DetourCreateCompDevice;
+                void* det = (delegate* unmanaged[Stdcall]<nint, Guid*, nint*, int>)&DetourCreateCompDevice;
                 void* o = null;
                 if (MinHook.CreateHook((void*)addrCompDev, det, &o) == 0)
                 {
