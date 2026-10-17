@@ -12,7 +12,6 @@ public static unsafe class Overlay
 
     internal static nint Dx11SwapChain => swapChain;
     internal static Dx11Backend Dx11Backend => backend11;
-    internal static Dx12Backend Dx12Backend => backend12;
 
     public static bool isReady => ready;
 
@@ -25,17 +24,15 @@ public static unsafe class Overlay
     private static long lastTicks;
     private static bool queueWaitLogged;
 
-    private static OverlayMode mode = OverlayMode.Auto;
     private static RenderApi api = RenderApi.None;
     private static Dx11Backend backend11;
     private static Dx12Backend backend12;
 
-    public static void Initialize(OverlayMode overlayMode = OverlayMode.Auto)
+    public static void Initialize()
     {
         if (started) return;
         started = true;
-        mode = overlayMode;
-        Logger.Info("Overlay", $"Initialize mode={overlayMode}");
+        Logger.Info("Overlay", "Initialize");
     }
 
     internal static void OnPresentInternal(nint sc, uint flags)
@@ -75,7 +72,7 @@ public static unsafe class Overlay
 
         if (w < 64 || h < 64) { Logger.Error("Overlay", $"too small {w}x{h}"); return false; }
 
-        Logger.Info("Overlay", $"InitImGui sc=0x{sc:X} {w}x{h} hwnd=0x{hwnd:X} mode={mode}");
+        Logger.Info("Overlay", $"InitImGui sc=0x{sc:X} {w}x{h} hwnd=0x{hwnd:X}");
 
         context = ImGui.CreateContext(0);
         if (context == 0) { Logger.Error("Overlay", "no context"); return false; }
