@@ -83,19 +83,14 @@ public static class Bootstrap
         }
 
         Logger.Info("Bootstrap", $"Dx12 via Dx11 vtable Present=0x{presentAddr:X} Present1=0x{present1Addr:X} ResizeBuffers=0x{resizeAddr:X}");
-
-        if (!Dx12ExecuteCommandListsFinder.TryGet(out nint execCmdListsAddr))
+        if (Dx12ExecuteCommandListsFinder.TryGet(out nint execCmdListsAddr))
         {
-            Logger.Error("Bootstrap", "Dx12ExecuteCommandListsFinder failed");
-            return false;
+            Logger.Info("Bootstrap", "ExecuteCommandLists hook installed");
         }
-
-        if (!ExecuteCommandListsHook.Install(execCmdListsAddr))
+        else
         {
-            Logger.Error("Bootstrap", "ExecuteCommandLists hook install failed");
-            return false;
+            Logger.Warn("Bootstrap", "Dx12ExecuteCommandListsFinder failed (Hook may still be active)");
         }
-        Logger.Info("Bootstrap", "ExecuteCommandLists hook installed");
 
         if (resizeAddr != 0 && ResizeBuffersHook.Install(resizeAddr))
             Logger.Info("Bootstrap", "ResizeBuffers hook installed");

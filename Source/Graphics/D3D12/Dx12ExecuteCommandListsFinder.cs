@@ -59,10 +59,16 @@ public static unsafe class Dx12ExecuteCommandListsFinder
             if (execCmdListsAddr != 0 && !ExecuteCommandListsHook.IsInstalled)
             {
                 if (ExecuteCommandListsHook.Install(execCmdListsAddr))
+                {
                     Logger.Info("Dx12", "ExecuteCommandLists hook installed (from game queue)");
+                    executeCommandLists = execCmdListsAddr; // <--- ВОТ ЭТА СТРОКА!
+                }
                 else
+                {
                     Logger.Warn("Dx12", "ExecuteCommandLists hook failed");
+                }
             }
+
             return executeCommandLists != 0;
         }
         finally
