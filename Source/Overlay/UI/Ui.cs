@@ -18,6 +18,17 @@ public static unsafe partial class Ui
             NoInputs = NoMouseInputs | NoNavInputs | NoNavFocus;
     }
 
+    public static class StyleVar
+    {
+        public const int Alpha = 0, WindowPadding = 1, WindowRounding = 2, WindowBorderSize = 3,
+            WindowMinSize = 4, WindowTitleAlign = 5, ChildRounding = 6, ChildBorderSize = 7,
+            PopupRounding = 8, PopupBorderSize = 9, FramePadding = 10, FrameRounding = 11,
+            FrameBorderSize = 12, ItemSpacing = 13, ItemInnerSpacing = 14, IndentSpacing = 15,
+            CellPadding = 16, ScrollbarSize = 17, ScrollbarRounding = 18, GrabMinSize = 19,
+            GrabRounding = 20, TabRounding = 21, TabBorderSize = 22, TabBarBorderSize = 23,
+            TableAngledHeadersAngle = 24;
+    }
+
     public static class Cond
     {
         public const int Always = 1, Once = 2, FirstUseEver = 4, Appearing = 8;
