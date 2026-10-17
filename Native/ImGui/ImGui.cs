@@ -159,6 +159,15 @@ public static unsafe class ImGui
     [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_GetWindowDrawList")]
     public static extern nint GetWindowDrawList();
 
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImDrawList_AddRectFilled")]
+    public static extern void ImDrawListAddRectFilled(nint drawList, float minX, float minY, float maxX, float maxY, uint col, float rounding, int flags);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImDrawList_AddCircleFilled")]
+    public static extern void ImDrawListAddCircleFilled(nint drawList, float centerX, float centerY, float radius, uint col, int numSegments);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImDrawList_AddText")]
+    public static extern void ImDrawListAddText(nint drawList, float posX, float posY, uint col, byte* textBegin, byte* textEnd);
+
     [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_GetWindowPos")]
     public static extern void GetWindowPos(out float x, out float y);
 

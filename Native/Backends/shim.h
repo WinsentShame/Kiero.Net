@@ -547,6 +547,9 @@ extern "C" {
 	// ============================================================
 	// VIEWPORT / DRAWLISTS
 	// ============================================================
+	void shim_ImDrawList_AddRectFilled(ImDrawList* draw_list, float min_x, float min_y, float max_x, float max_y, unsigned int col, float rounding, int flags);
+	void shim_ImDrawList_AddCircleFilled(ImDrawList* draw_list, float center_x, float center_y, float radius, unsigned int col, int num_segments);
+	void shim_ImDrawList_AddText(ImDrawList* draw_list, float pos_x, float pos_y, unsigned int col, const char* text_begin, const char* text_end);
 	ImGuiViewport* shim_GetMainViewport();
 	ImDrawList* shim_GetBackgroundDrawList();
 	ImDrawList* shim_GetForegroundDrawList();

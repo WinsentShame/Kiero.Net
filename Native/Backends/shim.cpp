@@ -633,6 +633,20 @@
 	ImGuiViewport* shim_GetMainViewport() { return ImGui::GetMainViewport(); }
 	ImDrawList* shim_GetBackgroundDrawList() { return ImGui::GetBackgroundDrawList(); }
 	ImDrawList* shim_GetForegroundDrawList() { return ImGui::GetForegroundDrawList(); }
+	void shim_ImDrawList_AddRectFilled(ImDrawList* draw_list, float min_x, float min_y, float max_x, float max_y, unsigned int col, float rounding, int flags)
+	{
+		draw_list->AddRectFilled(ImVec2(min_x, min_y), ImVec2(max_x, max_y), col, rounding, (ImDrawFlags)flags);
+	}
+
+	void shim_ImDrawList_AddCircleFilled(ImDrawList* draw_list, float center_x, float center_y, float radius, unsigned int col, int num_segments)
+	{
+		draw_list->AddCircleFilled(ImVec2(center_x, center_y), radius, col, num_segments);
+	}
+
+	void shim_ImDrawList_AddText(ImDrawList* draw_list, float pos_x, float pos_y, unsigned int col, const char* text_begin, const char* text_end)
+	{
+		draw_list->AddText(ImVec2(pos_x, pos_y), col, text_begin, text_end);
+	}
 
 	// ============================================================
 	// MISC
