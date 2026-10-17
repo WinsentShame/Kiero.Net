@@ -168,6 +168,48 @@ public static unsafe class ImGui
     [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImDrawList_AddText")]
     public static extern void ImDrawListAddText(nint drawList, float posX, float posY, uint col, byte* textBegin, byte* textEnd);
 
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImDrawList_AddLine")]
+    public static extern void ImDrawListAddLine(nint drawList, float p1X, float p1Y, float p2X, float p2Y, uint col, float thickness);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImDrawList_AddRect")]
+    public static extern void ImDrawListAddRect(nint drawList, float minX, float minY, float maxX, float maxY, uint col, float rounding, int flags, float thickness);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImDrawList_AddRectFilledMultiColor")]
+    public static extern void ImDrawListAddRectFilledMultiColor(nint drawList, float minX, float minY, float maxX, float maxY, uint colUprLeft, uint colUprRight, uint colBotRight, uint colBotLeft);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImDrawList_AddTriangle")]
+    public static extern void ImDrawListAddTriangle(nint drawList, float p1X, float p1Y, float p2X, float p2Y, float p3X, float p3Y, uint col, float thickness);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImDrawList_AddTriangleFilled")]
+    public static extern void ImDrawListAddTriangleFilled(nint drawList, float p1X, float p1Y, float p2X, float p2Y, float p3X, float p3Y, uint col);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImDrawList_AddQuad")]
+    public static extern void ImDrawListAddQuad(nint drawList, float p1X, float p1Y, float p2X, float p2Y, float p3X, float p3Y, float p4X, float p4Y, uint col, float thickness);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImDrawList_AddQuadFilled")]
+    public static extern void ImDrawListAddQuadFilled(nint drawList, float p1X, float p1Y, float p2X, float p2Y, float p3X, float p3Y, float p4X, float p4Y, uint col);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImDrawList_AddCircle")]
+    public static extern void ImDrawListAddCircle(nint drawList, float centerX, float centerY, float radius, uint col, int numSegments, float thickness);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImDrawList_AddNgon")]
+    public static extern void ImDrawListAddNgon(nint drawList, float centerX, float centerY, float radius, uint col, int numSegments, float thickness);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImDrawList_AddNgonFilled")]
+    public static extern void ImDrawListAddNgonFilled(nint drawList, float centerX, float centerY, float radius, uint col, int numSegments);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImDrawList_AddBezierCubic")]
+    public static extern void ImDrawListAddBezierCubic(nint drawList, float p1X, float p1Y, float p2X, float p2Y, float p3X, float p3Y, float p4X, float p4Y, uint col, float thickness, int numSegments);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImDrawList_AddBezierQuadratic")]
+    public static extern void ImDrawListAddBezierQuadratic(nint drawList, float p1X, float p1Y, float p2X, float p2Y, float p3X, float p3Y, uint col, float thickness, int numSegments);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImDrawList_AddImage")]
+    public static extern void ImDrawListAddImage(nint drawList, ulong userTextureId, float pMinX, float pMinY, float pMaxX, float pMaxY);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImDrawList_AddImageRounded")]
+    public static extern void ImDrawListAddImageRounded(nint drawList, ulong userTextureId, float pMinX, float pMinY, float pMaxX, float pMaxY, float uvMinX, float uvMinY, float uvMaxX, float uvMaxY, uint col, float rounding, int flags);
+
     [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_GetWindowPos")]
     public static extern void GetWindowPos(out float x, out float y);
 

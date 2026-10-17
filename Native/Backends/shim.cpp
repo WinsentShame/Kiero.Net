@@ -633,11 +633,6 @@
 	ImGuiViewport* shim_GetMainViewport() { return ImGui::GetMainViewport(); }
 	ImDrawList* shim_GetBackgroundDrawList() { return ImGui::GetBackgroundDrawList(); }
 	ImDrawList* shim_GetForegroundDrawList() { return ImGui::GetForegroundDrawList(); }
-	void shim_ImDrawList_AddRectFilled(ImDrawList* draw_list, float min_x, float min_y, float max_x, float max_y, unsigned int col, float rounding, int flags)
-	{
-		draw_list->AddRectFilled(ImVec2(min_x, min_y), ImVec2(max_x, max_y), col, rounding, (ImDrawFlags)flags);
-	}
-
 	void shim_ImDrawList_AddCircleFilled(ImDrawList* draw_list, float center_x, float center_y, float radius, unsigned int col, int num_segments)
 	{
 		draw_list->AddCircleFilled(ImVec2(center_x, center_y), radius, col, num_segments);
@@ -646,6 +641,81 @@
 	void shim_ImDrawList_AddText(ImDrawList* draw_list, float pos_x, float pos_y, unsigned int col, const char* text_begin, const char* text_end)
 	{
 		draw_list->AddText(ImVec2(pos_x, pos_y), col, text_begin, text_end);
+	}
+
+	void shim_ImDrawList_AddLine(ImDrawList* draw_list, float p1_x, float p1_y, float p2_x, float p2_y, unsigned int col, float thickness)
+	{
+		draw_list->AddLine(ImVec2(p1_x, p1_y), ImVec2(p2_x, p2_y), col, thickness);
+	}
+
+	void shim_ImDrawList_AddRect(ImDrawList* draw_list, float min_x, float min_y, float max_x, float max_y, unsigned int col, float rounding, int flags, float thickness)
+	{
+		draw_list->AddRect(ImVec2(min_x, min_y), ImVec2(max_x, max_y), col, rounding, (ImDrawFlags)flags, thickness);
+	}
+
+	void shim_ImDrawList_AddRectFilled(ImDrawList* draw_list, float min_x, float min_y, float max_x, float max_y, unsigned int col, float rounding, int flags)
+	{
+		draw_list->AddRectFilled(ImVec2(min_x, min_y), ImVec2(max_x, max_y), col, rounding, (ImDrawFlags)flags);
+	}
+
+	void shim_ImDrawList_AddRectFilledMultiColor(ImDrawList* draw_list, float min_x, float min_y, float max_x, float max_y, unsigned int col_upr_left, unsigned int col_upr_right, unsigned int col_bot_right, unsigned int col_bot_left)
+	{
+		draw_list->AddRectFilledMultiColor(ImVec2(min_x, min_y), ImVec2(max_x, max_y), col_upr_left, col_upr_right, col_bot_right, col_bot_left);
+	}
+
+	void shim_ImDrawList_AddTriangle(ImDrawList* draw_list, float p1_x, float p1_y, float p2_x, float p2_y, float p3_x, float p3_y, unsigned int col, float thickness)
+	{
+		draw_list->AddTriangle(ImVec2(p1_x, p1_y), ImVec2(p2_x, p2_y), ImVec2(p3_x, p3_y), col, thickness);
+	}
+
+	void shim_ImDrawList_AddTriangleFilled(ImDrawList* draw_list, float p1_x, float p1_y, float p2_x, float p2_y, float p3_x, float p3_y, unsigned int col)
+	{
+		draw_list->AddTriangleFilled(ImVec2(p1_x, p1_y), ImVec2(p2_x, p2_y), ImVec2(p3_x, p3_y), col);
+	}
+
+	void shim_ImDrawList_AddQuad(ImDrawList* draw_list, float p1_x, float p1_y, float p2_x, float p2_y, float p3_x, float p3_y, float p4_x, float p4_y, unsigned int col, float thickness)
+	{
+		draw_list->AddQuad(ImVec2(p1_x, p1_y), ImVec2(p2_x, p2_y), ImVec2(p3_x, p3_y), ImVec2(p4_x, p4_y), col, thickness);
+	}
+
+	void shim_ImDrawList_AddQuadFilled(ImDrawList* draw_list, float p1_x, float p1_y, float p2_x, float p2_y, float p3_x, float p3_y, float p4_x, float p4_y, unsigned int col)
+	{
+		draw_list->AddQuadFilled(ImVec2(p1_x, p1_y), ImVec2(p2_x, p2_y), ImVec2(p3_x, p3_y), ImVec2(p4_x, p4_y), col);
+	}
+
+	void shim_ImDrawList_AddCircle(ImDrawList* draw_list, float center_x, float center_y, float radius, unsigned int col, int num_segments, float thickness)
+	{
+		draw_list->AddCircle(ImVec2(center_x, center_y), radius, col, num_segments, thickness);
+	}
+
+	void shim_ImDrawList_AddNgon(ImDrawList* draw_list, float center_x, float center_y, float radius, unsigned int col, int num_segments, float thickness)
+	{
+		draw_list->AddNgon(ImVec2(center_x, center_y), radius, col, num_segments, thickness);
+	}
+
+	void shim_ImDrawList_AddNgonFilled(ImDrawList* draw_list, float center_x, float center_y, float radius, unsigned int col, int num_segments)
+	{
+		draw_list->AddNgonFilled(ImVec2(center_x, center_y), radius, col, num_segments);
+	}
+
+	void shim_ImDrawList_AddBezierCubic(ImDrawList* draw_list, float p1_x, float p1_y, float p2_x, float p2_y, float p3_x, float p3_y, float p4_x, float p4_y, unsigned int col, float thickness, int num_segments)
+	{
+		draw_list->AddBezierCubic(ImVec2(p1_x, p1_y), ImVec2(p2_x, p2_y), ImVec2(p3_x, p3_y), ImVec2(p4_x, p4_y), col, thickness, num_segments);
+	}
+
+	void shim_ImDrawList_AddBezierQuadratic(ImDrawList* draw_list, float p1_x, float p1_y, float p2_x, float p2_y, float p3_x, float p3_y, unsigned int col, float thickness, int num_segments)
+	{
+		draw_list->AddBezierQuadratic(ImVec2(p1_x, p1_y), ImVec2(p2_x, p2_y), ImVec2(p3_x, p3_y), col, thickness, num_segments);
+	}
+
+	void shim_ImDrawList_AddImage(ImDrawList* draw_list, unsigned long long user_texture_id, float p_min_x, float p_min_y, float p_max_x, float p_max_y)
+	{
+		draw_list->AddImage((ImTextureID)user_texture_id, ImVec2(p_min_x, p_min_y), ImVec2(p_max_x, p_max_y));
+	}
+
+	void shim_ImDrawList_AddImageRounded(ImDrawList* draw_list, unsigned long long user_texture_id, float p_min_x, float p_min_y, float p_max_x, float p_max_y, float uv_min_x, float uv_min_y, float uv_max_x, float uv_max_y, unsigned int col, float rounding, int flags)
+	{
+		draw_list->AddImageRounded((ImTextureID)user_texture_id, ImVec2(p_min_x, p_min_y), ImVec2(p_max_x, p_max_y), ImVec2(uv_min_x, uv_min_y), ImVec2(uv_max_x, uv_max_y), col, rounding, (ImDrawFlags)flags);
 	}
 
 	// ============================================================

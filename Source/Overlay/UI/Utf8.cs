@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Kiero.Net;
 
-internal static unsafe class Utf8
+public static unsafe class Utf8
 {
     private const int ARENA_SIZE = 32 * 1024;
     private const int BIG_SLOTS = 4;
