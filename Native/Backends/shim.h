@@ -69,16 +69,29 @@ extern "C" {
 	// ============================================================
 	// DEMO / DEBUG
 	// ============================================================
-	void        shim_ShowDemoWindow(bool* p_open);
-	void        shim_ShowMetricsWindow(bool* p_open);
-	void        shim_ShowDebugLogWindow(bool* p_open);
-	void        shim_ShowIDStackToolWindow(bool* p_open);
-	void        shim_ShowAboutWindow(bool* p_open);
-	void        shim_ShowStyleEditor(ImGuiStyle* ref);
-	bool        shim_ShowStyleSelector(const char* label);
-	void        shim_ShowFontSelector(const char* label);
-	void        shim_ShowUserGuide();
-	const char* shim_GetVersion();
+	void			shim_ShowDemoWindow(bool* p_open);
+	void			shim_ShowMetricsWindow(bool* p_open);
+	void			shim_ShowDebugLogWindow(bool* p_open);
+	void			shim_ShowIDStackToolWindow(bool* p_open);
+	void			shim_ShowAboutWindow(bool* p_open);
+	void			shim_ShowStyleEditor(ImGuiStyle* ref);
+	bool			shim_ShowStyleSelector(const char* label);
+	void			shim_ShowFontSelector(const char* label);
+	void			shim_ShowUserGuide();
+	const char*		shim_GetVersion();
+	void			shim_DebugTextEncoding(const char* text);
+	void			shim_DebugFlashStyleColor(int idx);
+	void			shim_DebugStartItemPicker();
+	unsigned char	shim_DebugCheckVersionAndDataLayout(const char* version, unsigned long long sz_io, unsigned long long sz_style, unsigned long long sz_vec2, unsigned long long sz_vec4, unsigned long long sz_vert, unsigned long long sz_idx);
+
+	// =====================================================================
+	// MULTI-VIEWPORT
+	// =====================================================================
+	void    shim_UpdatePlatformWindows();
+	void    shim_RenderPlatformWindowsDefault();
+	void    shim_DestroyPlatformWindows();
+	void*	shim_FindViewportByID(unsigned int viewport_id);
+	void*	shim_FindViewportByPlatformHandle(void* handle);
 
 	// ============================================================
 	// STYLES
@@ -94,6 +107,12 @@ extern "C" {
 	void shim_End();
 	bool shim_BeginChild(const char* str_id, float w, float h, int child_flags, int window_flags);
 	bool shim_BeginChildID(unsigned int id, float w, float h, int child_flags, int window_flags);
+	void shim_SetNextWindowScroll(float x, float y);
+	void shim_SetNextWindowViewport(unsigned int viewport_id);
+	void shim_SetWindowPosStr(const char* name, float x, float y, int cond);
+	void shim_SetWindowSizeStr(const char* name, float w, float h, int cond);
+	void shim_SetWindowCollapsedStr(const char* name, unsigned char collapsed, int cond);
+	void shim_SetWindowFocusStr(const char* name);
 	void shim_EndChild();
 
 	bool        shim_IsWindowAppearing();
@@ -105,6 +124,8 @@ extern "C" {
 	void        shim_GetWindowSize(float* x, float* y);
 	float       shim_GetWindowWidth();
 	float       shim_GetWindowHeight();
+	float		shim_GetWindowDpiScale();
+	void*		shim_GetWindowViewport();
 
 	// ============================================================
 	// WINDOW MANIPULATION
@@ -115,7 +136,6 @@ extern "C" {
 	void shim_SetNextWindowContentSize(float w, float h);
 	void shim_SetNextWindowCollapsed(bool collapsed, int cond);
 	void shim_SetNextWindowFocus();
-	void shim_SetNextWindowScroll(float sx, float sy);
 	void shim_SetNextWindowBgAlpha(float alpha);
 
 	// ============================================================
@@ -197,6 +217,9 @@ extern "C" {
 	void         shim_PopID();
 	unsigned int shim_GetIDStr(const char* id);
 	unsigned int shim_GetIDInt(int id);
+	void		 shim_PushIDStrRange(const char* begin, const char* end);
+	unsigned int shim_GetIDStrRange(const char* begin, const char* end);
+	unsigned int shim_GetIDPtr(void* p);
 
 	// ============================================================
 	// TEXT
@@ -212,16 +235,54 @@ extern "C" {
 	// ============================================================
 	// MAIN WIDGETS
 	// ============================================================
-	bool shim_Button(const char* label, float w, float h);
-	bool shim_SmallButton(const char* label);
-	bool shim_InvisibleButton(const char* id, float w, float h, int flags);
-	bool shim_ArrowButton(const char* id, int dir);
-	bool shim_Checkbox(const char* label, bool* v);
-	bool shim_RadioButtonBool(const char* label, bool active);
-	bool shim_RadioButtonInt(const char* label, int* v, int v_button);
-	void shim_ProgressBar(float fraction, float w, float h, const char* overlay);
-	bool shim_TextLink(const char* label);
-	bool shim_TextLinkOpenURL(const char* label, const char* url);
+	bool			shim_Button(const char* label, float w, float h);
+	bool			shim_SmallButton(const char* label);
+	bool			shim_InvisibleButton(const char* id, float w, float h, int flags);
+	bool			shim_ArrowButton(const char* id, int dir);
+	bool			shim_Checkbox(const char* label, bool* v);
+	bool			shim_RadioButtonBool(const char* label, bool active);
+	bool			shim_RadioButtonInt(const char* label, int* v, int v_button);
+	void			shim_ProgressBar(float fraction, float w, float h, const char* overlay);
+	bool			shim_TextLink(const char* label);
+	bool			shim_TextLinkOpenURL(const char* label, const char* url);
+	void			shim_Text(const char* text);
+	unsigned char	shim_CheckboxFlagsInt(const char* label, int* flags, int flags_value);
+	unsigned char	shim_CheckboxFlagsUInt(const char* label, unsigned int* flags, unsigned int flags_value);
+	void			shim_Image(unsigned long long tex_id, float w, float h, float uv0x, float uv0y, float uv1x, float uv1y);
+	void			shim_ImageWithBg(unsigned long long tex_id, float w, float h, float uv0x, float uv0y, float uv1x, float uv1y, float bgr, float bgg, float bgb, float bga, float tr, float tg, float tb, float ta);
+	unsigned char	shim_ImageButton(const char* str_id, unsigned long long tex_id, float w, float h, float uv0x, float uv0y, float uv1x, float uv1y, float bgr, float bgg, float bgb, float bga, float tr, float tg, float tb, float ta);
+	unsigned char	shim_ComboCallback(const char* label, int* current_item, const char* (*getter)(void* user_data, int idx), void* user_data, int items_count, int popup_max_height);
+	unsigned char	shim_ComboZeros(const char* label, int* current_item, const char* items_separated_by_zeros, int popup_max_height);
+	unsigned char	shim_DragFloatRange2(const char* label, float* v_cur_min, float* v_cur_max, float speed, float v_min, float v_max, const char* fmt, const char* fmt_max, int flags);
+	unsigned char	shim_DragIntRange2(const char* label, int* v_cur_min, int* v_cur_max, float speed, int v_min, int v_max, const char* fmt, const char* fmt_max, int flags);
+	unsigned char	shim_DragScalar(const char* label, int data_type, void* p_data, float speed, const void* p_min, const void* p_max, const char* fmt, int flags);
+	unsigned char	shim_DragScalarN(const char* label, int data_type, void* p_data, int components, float speed, const void* p_min, const void* p_max, const char* fmt, int flags);
+	unsigned char	shim_SliderScalar(const char* label, int data_type, void* p_data, const void* p_min, const void* p_max, const char* fmt, int flags);
+	unsigned char	shim_SliderScalarN(const char* label, int data_type, void* p_data, int components, const void* p_min, const void* p_max, const char* fmt, int flags);
+	unsigned char	shim_VSliderScalar(const char* label, float w, float h, int data_type, void* p_data, const void* p_min, const void* p_max, const char* fmt, int flags);
+	unsigned char	shim_InputTextWithHint(const char* label, const char* hint, char* buf, unsigned long long size, int flags);
+	unsigned char	shim_InputFloat2(const char* label, float* v, const char* fmt, int flags);
+	unsigned char	shim_InputFloat3(const char* label, float* v, const char* fmt, int flags);
+	unsigned char	shim_InputFloat4(const char* label, float* v, const char* fmt, int flags);
+	unsigned char	shim_InputInt2(const char* label, int* v, int flags);
+	unsigned char	shim_InputInt3(const char* label, int* v, int flags);
+	unsigned char	shim_InputInt4(const char* label, int* v, int flags);
+	unsigned char	shim_InputScalar(const char* label, int data_type, void* p_data, const void* p_step, const void* p_step_fast, const char* fmt, int flags);
+	unsigned char	shim_InputScalarN(const char* label, int data_type, void* p_data, int components, const void* p_step, const void* p_step_fast, const char* fmt, int flags);
+	unsigned char	shim_TreeNodeStrId(const char* str_id, const char* fmt);
+	unsigned char	shim_TreeNodePtrId(const void* ptr_id, const char* fmt);
+	unsigned char	shim_TreeNodeExStrId(const char* str_id, int flags, const char* fmt);
+	unsigned char	shim_TreeNodeExPtrId(const void* ptr_id, int flags, const char* fmt);
+	void			shim_TreePushStr(const char* str_id);
+	void			shim_TreePushPtr(const void* ptr_id);
+	void			shim_SetNextItemStorageID(unsigned int storage_id);
+	unsigned char	shim_TreeNodeGetOpen(unsigned int storage_id);
+	void*			shim_BeginMultiSelect(int flags, int selection_size, int items_count);
+	void*			shim_EndMultiSelect();
+	void			shim_SetNextItemSelectionUserData(long long selection_user_data);
+	unsigned char	shim_IsItemToggledSelection();
+	unsigned char	shim_ListBoxArray(const char* label, int* current_item, const char* const items[], int items_count, int height_in_items);
+	unsigned char	shim_ListBoxCallback(const char* label, int* current_item, const char* (*getter)(void* user_data, int idx), void* user_data, int items_count, int height_in_items);
 
 	// ============================================================
 	// COMBO
@@ -260,19 +321,33 @@ extern "C" {
 	// INPUT
 	// ============================================================
 	bool shim_InputText(const char* label, char* buf, size_t size, int flags);
-	bool shim_InputTextMultiline(const char* label, char* buf, size_t size, float w, float h, int flags);
-	bool shim_InputFloat(const char* label, float* v, float step, float fast, const char* fmt, int flags);
-	bool shim_InputInt(const char* label, int* v, int step, int fast, int flags);
-	bool shim_InputDouble(const char* label, double* v, double step, double fast, const char* fmt, int flags);
+	bool			shim_InputTextMultiline(const char* label, char* buf, size_t size, float w, float h, int flags);
+	bool			shim_InputFloat(const char* label, float* v, float step, float fast, const char* fmt, int flags);
+	bool			shim_InputInt(const char* label, int* v, int step, int fast, int flags);
+	bool			shim_InputDouble(const char* label, double* v, double step, double fast, const char* fmt, int flags);
+    unsigned char	shim_IsKeyChordPressed(int key_chord);
+    void			shim_SetNextFrameWantCaptureKeyboard(unsigned char want);
+    unsigned char	shim_Shortcut(int key_chord, int flags);
+    void			shim_SetNextItemShortcut(int key_chord, int flags);
+    unsigned char	shim_SetItemKeyOwner(int key);
+    unsigned char	shim_IsMouseReleasedWithDelay(int btn, float delay);
+    int				shim_GetMouseClickedCount(int btn);
+    unsigned char	shim_IsMousePosValid(float* pos);
+    unsigned char	shim_IsAnyMouseDown();
+    void			shim_GetMousePosOnOpeningCurrentPopup(float* x, float* y);
+    void			shim_SetNextFrameWantCaptureMouse(unsigned char want);
 
 	// ============================================================
 	// COLOR
 	// ============================================================
-	bool shim_ColorEdit3(const char* label, float* col, int flags);
-	bool shim_ColorEdit4(const char* label, float* col, int flags);
-	bool shim_ColorPicker3(const char* label, float* col, int flags);
-	bool shim_ColorPicker4(const char* label, float* col, int flags, const float* ref_col);
-	bool shim_ColorButton(const char* id, float r, float g, float b, float a, int flags, float w, float h);
+	bool		 shim_ColorEdit3(const char* label, float* col, int flags);
+	bool		 shim_ColorEdit4(const char* label, float* col, int flags);
+	bool		 shim_ColorPicker3(const char* label, float* col, int flags);
+	bool		 shim_ColorPicker4(const char* label, float* col, int flags, const float* ref_col);
+	bool		 shim_ColorButton(const char* id, float r, float g, float b, float a, int flags, float w, float h);extern "C" __declspec(dllexport) void    shim_ColorConvertU32ToFloat4(unsigned int in, float* out_rgba);
+	unsigned int shim_ColorConvertFloat4ToU32(float r, float g, float b, float a);
+	void		 shim_ColorConvertRGBtoHSV(float r, float g, float b, float* out_h, float* out_s, float* out_v);
+	void		 shim_ColorConvertHSVtoRGB(float h, float s, float v, float* out_r, float* out_g, float* out_b);
 
 	// ============================================================
 	// TREE
@@ -364,6 +439,22 @@ extern "C" {
 	int         shim_TableGetRowIndex();
 	const char* shim_TableGetColumnName(int n);
 	void        shim_TableSetBgColor(int target, unsigned int color, int col);
+	void*		shim_TableGetSortSpecs();
+	int			shim_TableGetColumnFlags(int column_n);
+	void		shim_TableSetColumnEnabled(int column_n, unsigned char v);
+	int			shim_TableGetHoveredColumn();
+
+	// =====================================================================
+	// LEGACY COLUMNS
+	// =====================================================================
+	void    shim_Columns(int count, const char* id, unsigned char borders);
+	void    shim_NextColumn();
+	int     shim_GetColumnIndex();
+	float   shim_GetColumnWidth(int column_index);
+	void    shim_SetColumnWidth(int column_index, float width);
+	float   shim_GetColumnOffset(int column_index);
+	void    shim_SetColumnOffset(int column_index, float offset_x);
+	int     shim_GetColumnsCount();
 
 	// ============================================================
 	// TAB BAR
@@ -437,6 +528,22 @@ extern "C" {
 	void         shim_GetItemRectMax(float* x, float* y);
 	void         shim_GetItemRectSize(float* x, float* y);
 
+	// =====================================================================
+	// DOCKING
+	// =====================================================================
+	unsigned int  shim_DockSpace(unsigned int dockspace_id, float w, float h, int flags, void* window_class);
+	unsigned int  shim_DockSpaceOverViewport(unsigned int dockspace_id, void* viewport, int flags, void* window_class);
+	void		  shim_SetNextWindowDockID(unsigned int dock_id, int cond);
+	void		  shim_SetNextWindowClass(void* window_class);
+	unsigned int  shim_GetWindowDockID();
+	unsigned char shim_IsWindowDocked();
+
+	// =====================================================================
+	// ITEM UTILITIES
+	// =====================================================================
+	int     shim_GetItemFlags();
+	int     shim_GetItemClickedCountWithSingleClickDelay(int btn, float delay);
+
 	// ============================================================
 	// VIEWPORT / DRAWLISTS
 	// ============================================================
@@ -452,6 +559,9 @@ extern "C" {
 	int         shim_GetFrameCount();
 	const char* shim_GetStyleColorName(int idx);
 	void        shim_CalcTextSize(float* ox, float* oy, const char* text, const char* end, bool hide_hash, float wrap_w);
+	void*		shim_GetDrawListSharedData();
+	void		shim_SetStateStorage(void* storage);
+	void*	    shim_GetStateStorage();
 
 	// ============================================================
 	// INPUT QUERIES
@@ -545,6 +655,22 @@ extern "C" {
 	bool     shim_ImplWin32_Init(void* hwnd);
 	void     shim_ImplWin32_Shutdown();
 	void     shim_ImplWin32_NewFrame();
+
+	// =====================================================================
+	// PARAMS STACKS
+	// =====================================================================
+	void* shim_GetFontBaked();
+	void  shim_PushStyleVarX(int idx, float val_x);
+	void  shim_PushStyleVarY(int idx, float val_y);
+	void  shim_PushItemFlag(int option, unsigned char enabled);
+	void  shim_PopItemFlag();
+
+	// =====================================================================
+	// STYLE READ
+	// =====================================================================
+	void			shim_GetFontTexUvWhitePixel(float* x, float* y);
+	void			shim_GetStyleColorVec4(int idx, float* rgba);
+	unsigned int	shim_GetColorU32Vec4(float r, float g, float b, float a);
 
 #ifdef __cplusplus
 }

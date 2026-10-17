@@ -402,9 +402,6 @@ public static unsafe class ImGui
     [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_Checkbox")]
     public static extern byte Checkbox(byte* label, byte* v);
 
-    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_RadioButtonBool")]
-    public static extern byte RadioButtonBool(byte* label, byte active);
-
     [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_RadioButtonInt")]
     public static extern byte RadioButtonInt(byte* label, int* v, int vButton);
 
@@ -692,6 +689,317 @@ public static unsafe class ImGui
 
     [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_SetTabItemClosed")]
     public static extern void SetTabItemClosed(byte* label);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_GetWindowDpiScale")]
+    public static extern float GetWindowDpiScale();
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_GetWindowViewport")]
+    public static extern nint GetWindowViewport();
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_SetNextWindowScroll")]
+    public static extern void SetNextWindowScroll(float x, float y);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_SetNextWindowViewport")]
+    public static extern void SetNextWindowViewport(uint viewportId);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_SetWindowPosStr")]
+    public static extern void SetWindowPosStr(byte* name, float x, float y, int cond);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_SetWindowSizeStr")]
+    public static extern void SetWindowSizeStr(byte* name, float w, float h, int cond);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_SetWindowCollapsedStr")]
+    public static extern void SetWindowCollapsedStr(byte* name, byte collapsed, int cond);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_SetWindowFocusStr")]
+    public static extern void SetWindowFocusStr(byte* name);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_GetFontBaked")]
+    public static extern nint GetFontBaked();
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_PushStyleVarX")]
+    public static extern void PushStyleVarX(int idx, float valX);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_PushStyleVarY")]
+    public static extern void PushStyleVarY(int idx, float valY);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_PushItemFlag")]
+    public static extern void PushItemFlag(int option, byte enabled);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_PopItemFlag")]
+    public static extern void PopItemFlag();
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_GetFontTexUvWhitePixel")]
+    public static extern void GetFontTexUvWhitePixel(out float x, out float y);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_GetStyleColorVec4")]
+    public static extern void GetStyleColorVec4(int idx, float* rgba);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_GetColorU32Vec4")]
+    public static extern uint GetColorU32Vec4(float r, float g, float b, float a);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_PushIDStrRange")]
+    public static extern void PushIDStrRange(byte* begin, byte* end);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_GetIDStrRange")]
+    public static extern uint GetIDStrRange(byte* begin, byte* end);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_GetIDPtr")]
+    public static extern uint GetIDPtr(void* p);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_Text")]
+    public static extern void Text(byte* text);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_CheckboxFlagsInt")]
+    public static extern byte CheckboxFlagsInt(byte* label, int* flags, int flagsValue);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_CheckboxFlagsUInt")]
+    public static extern byte CheckboxFlagsUInt(byte* label, uint* flags, uint flagsValue);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_RadioButtonBool")]
+    public static extern byte RadioButtonBool(byte* label, byte active);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_Image")]
+    public static extern void Image(ulong texId, float w, float h, float uv0x, float uv0y, float uv1x, float uv1y);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImageWithBg")]
+    public static extern void ImageWithBg(ulong texId, float w, float h, float uv0x, float uv0y, float uv1x, float uv1y,
+                                           float bgr, float bgg, float bgb, float bga, float tr, float tg, float tb, float ta);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImageButton")]
+    public static extern byte ImageButton(byte* strId, ulong texId, float w, float h, float uv0x, float uv0y, float uv1x, float uv1y,
+                                           float bgr, float bgg, float bgb, float bga, float tr, float tg, float tb, float ta);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ComboZeros")]
+    public static extern byte ComboZeros(byte* label, int* currentItem, byte* itemsSeparatedByZeros, int popupMaxHeight);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_DragFloatRange2")]
+    public static extern byte DragFloatRange2(byte* label, float* curMin, float* curMax, float speed, float vMin, float vMax, byte* fmt, byte* fmtMax, int flags);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_DragIntRange2")]
+    public static extern byte DragIntRange2(byte* label, int* curMin, int* curMax, float speed, int vMin, int vMax, byte* fmt, byte* fmtMax, int flags);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_DragScalar")]
+    public static extern byte DragScalar(byte* label, int dataType, void* pData, float speed, void* pMin, void* pMax, byte* fmt, int flags);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_DragScalarN")]
+    public static extern byte DragScalarN(byte* label, int dataType, void* pData, int components, float speed, void* pMin, void* pMax, byte* fmt, int flags);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_SliderScalar")]
+    public static extern byte SliderScalar(byte* label, int dataType, void* pData, void* pMin, void* pMax, byte* fmt, int flags);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_SliderScalarN")]
+    public static extern byte SliderScalarN(byte* label, int dataType, void* pData, int components, void* pMin, void* pMax, byte* fmt, int flags);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_VSliderScalar")]
+    public static extern byte VSliderScalar(byte* label, float w, float h, int dataType, void* pData, void* pMin, void* pMax, byte* fmt, int flags);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_InputTextWithHint")]
+    public static extern byte InputTextWithHint(byte* label, byte* hint, byte* buf, nuint size, int flags);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_InputFloat2")]
+    public static extern byte InputFloat2(byte* label, float* v, byte* fmt, int flags);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_InputFloat3")]
+    public static extern byte InputFloat3(byte* label, float* v, byte* fmt, int flags);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_InputFloat4")]
+    public static extern byte InputFloat4(byte* label, float* v, byte* fmt, int flags);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_InputInt2")]
+    public static extern byte InputInt2(byte* label, int* v, int flags);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_InputInt3")]
+    public static extern byte InputInt3(byte* label, int* v, int flags);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_InputInt4")]
+    public static extern byte InputInt4(byte* label, int* v, int flags);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_InputScalar")]
+    public static extern byte InputScalar(byte* label, int dataType, void* pData, void* pStep, void* pStepFast, byte* fmt, int flags);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_InputScalarN")]
+    public static extern byte InputScalarN(byte* label, int dataType, void* pData, int components, void* pStep, void* pStepFast, byte* fmt, int flags);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_TreeNodeStrId")]
+    public static extern byte TreeNodeStrId(byte* strId, byte* fmt);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_TreeNodePtrId")]
+    public static extern byte TreeNodePtrId(void* ptrId, byte* fmt);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_TreeNodeExStrId")]
+    public static extern byte TreeNodeExStrId(byte* strId, int flags, byte* fmt);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_TreeNodeExPtrId")]
+    public static extern byte TreeNodeExPtrId(void* ptrId, int flags, byte* fmt);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_TreePushStr")]
+    public static extern void TreePushStr(byte* strId);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_TreePushPtr")]
+    public static extern void TreePushPtr(void* ptrId);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_SetNextItemStorageID")]
+    public static extern void SetNextItemStorageID(uint storageId);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_TreeNodeGetOpen")]
+    public static extern byte TreeNodeGetOpen(uint storageId);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_BeginMultiSelect")]
+    public static extern nint BeginMultiSelect(int flags, int selectionSize, int itemsCount);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_EndMultiSelect")]
+    public static extern nint EndMultiSelect();
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_SetNextItemSelectionUserData")]
+    public static extern void SetNextItemSelectionUserData(long selectionUserData);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_IsItemToggledSelection")]
+    public static extern byte IsItemToggledSelection();
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ListBoxArray")]
+    public static extern byte ListBoxArray(byte* label, int* currentItem, byte** items, int itemsCount, int heightInItems);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_TableGetSortSpecs")]
+    public static extern nint TableGetSortSpecs();
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_TableGetColumnFlags")]
+    public static extern int TableGetColumnFlags(int columnN);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_TableSetColumnEnabled")]
+    public static extern void TableSetColumnEnabled(int columnN, byte v);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_TableGetHoveredColumn")]
+    public static extern int TableGetHoveredColumn();
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_Columns")]
+    public static extern void Columns(int count, byte* id, byte borders);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_NextColumn")]
+    public static extern void NextColumn();
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_GetColumnIndex")]
+    public static extern int GetColumnIndex();
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_GetColumnWidth")]
+    public static extern float GetColumnWidth(int columnIndex);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_SetColumnWidth")]
+    public static extern void SetColumnWidth(int columnIndex, float width);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_GetColumnOffset")]
+    public static extern float GetColumnOffset(int columnIndex);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_SetColumnOffset")]
+    public static extern void SetColumnOffset(int columnIndex, float offsetX);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_GetColumnsCount")]
+    public static extern int GetColumnsCount();
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_DockSpace")]
+    public static extern uint DockSpace(uint dockspaceId, float w, float h, int flags, void* windowClass);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_DockSpaceOverViewport")]
+    public static extern uint DockSpaceOverViewport(uint dockspaceId, void* viewport, int flags, void* windowClass);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_SetNextWindowDockID")]
+    public static extern void SetNextWindowDockID(uint dockId, int cond);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_SetNextWindowClass")]
+    public static extern void SetNextWindowClass(void* windowClass);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_GetWindowDockID")]
+    public static extern uint GetWindowDockID();
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_IsWindowDocked")]
+    public static extern byte IsWindowDocked();
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_GetItemFlags")]
+    public static extern int GetItemFlags();
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_GetItemClickedCountWithSingleClickDelay")]
+    public static extern int GetItemClickedCountWithSingleClickDelay(int btn, float delay);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_GetDrawListSharedData")]
+    public static extern nint GetDrawListSharedData();
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_SetStateStorage")]
+    public static extern void SetStateStorage(void* storage);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_GetStateStorage")]
+    public static extern nint GetStateStorage();
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ColorConvertU32ToFloat4")]
+    public static extern void ColorConvertU32ToFloat4(uint @in, float* outRgba);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ColorConvertFloat4ToU32")]
+    public static extern uint ColorConvertFloat4ToU32(float r, float g, float b, float a);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ColorConvertRGBtoHSV")]
+    public static extern void ColorConvertRGBtoHSV(float r, float g, float b, out float h, out float s, out float v);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ColorConvertHSVtoRGB")]
+    public static extern void ColorConvertHSVtoRGB(float h, float s, float v, out float r, out float g, out float b);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_IsKeyChordPressed")]
+    public static extern byte IsKeyChordPressed(int keyChord);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_SetNextFrameWantCaptureKeyboard")]
+    public static extern void SetNextFrameWantCaptureKeyboard(byte want);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_Shortcut")]
+    public static extern byte Shortcut(int keyChord, int flags);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_SetNextItemShortcut")]
+    public static extern void SetNextItemShortcut(int keyChord, int flags);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_SetItemKeyOwner")]
+    public static extern byte SetItemKeyOwner(int key);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_IsMouseReleasedWithDelay")]
+    public static extern byte IsMouseReleasedWithDelay(int btn, float delay);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_GetMouseClickedCount")]
+    public static extern int GetMouseClickedCount(int btn);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_IsMousePosValid")]
+    public static extern byte IsMousePosValid(float* pos);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_IsAnyMouseDown")]
+    public static extern byte IsAnyMouseDown();
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_GetMousePosOnOpeningCurrentPopup")]
+    public static extern void GetMousePosOnOpeningCurrentPopup(out float x, out float y);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_SetNextFrameWantCaptureMouse")]
+    public static extern void SetNextFrameWantCaptureMouse(byte want);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_DebugTextEncoding")]
+    public static extern void DebugTextEncoding(byte* text);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_DebugFlashStyleColor")]
+    public static extern void DebugFlashStyleColor(int idx);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_DebugStartItemPicker")]
+    public static extern void DebugStartItemPicker();
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_DebugCheckVersionAndDataLayout")]
+    public static extern byte DebugCheckVersionAndDataLayout(byte* version, nuint szIo, nuint szStyle, nuint szVec2, nuint szVec4, nuint szVert, nuint szIdx);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_UpdatePlatformWindows")]
+    public static extern void UpdatePlatformWindows();
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_RenderPlatformWindowsDefault")]
+    public static extern void RenderPlatformWindowsDefault();
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_DestroyPlatformWindows")]
+    public static extern void DestroyPlatformWindows();
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_FindViewportByID")]
+    public static extern nint FindViewportByID(uint viewportId);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_FindViewportByPlatformHandle")]
+    public static extern nint FindViewportByPlatformHandle(void* handle);
 
     [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_LogToTTY")]
     public static extern void LogToTTY(int depth);
