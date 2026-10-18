@@ -253,7 +253,27 @@ internal sealed unsafe class Dx12Backend
         }
     }
 
-    //public void ReleaseRenderTarget() { }
+    public void Shutdown()
+    {
+        if (!ready) return;
+        ready = false;
 
-    public void Shutdown() => ready = false;
+        try { ImGui.ImplDX12Shutdown(); } catch { }
+
+        for (int i = 0; i < FRAMES_IN_FLIGHT; i++)
+        {
+            if (lists[i] != 0) { Com.Release(lists[i]); lists[i] = 0; }
+            if (allocators[i] != 0) { Com.Release(allocators[i]); allocators[i] = 0; }
+        }
+
+        if (fence != 0) { Com.Release(fence); fence = 0; }
+        if (rtvHeap != 0) { Com.Release(rtvHeap); rtvHeap = 0; }
+        if (srvHeap != 0) { Com.Release(srvHeap); srvHeap = 0; }
+        if (device != 0) { Com.Release(device); device = 0; }
+
+        queue = 0;
+        swapChain = 0;
+
+        Logger.Info("Dx12", "Shutdown complete");
+    }
 }
