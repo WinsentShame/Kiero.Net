@@ -9,8 +9,9 @@ public static unsafe class ExecuteCommandListsHook
     private const int COMMAND_LIST_TYPE_DIRECT = 0;
 
     private static nint original;
-    private static nint lastQueue;
     private static int installed;
+
+    private static volatile nint lastQueue;
 
     public static nint LastQueue => lastQueue;
     public static bool IsInstalled => installed != 0;

@@ -166,7 +166,7 @@ internal sealed unsafe class Dx12Backend
             while (D3D12Shim.FenceGetCompletedValue(fence) < fenceValues[fi])
             {
                 System.Threading.Thread.Yield();
-                if (++spins > 10_000_000) 
+                if (++spins > 10_000_000)
                 {
                     Logger.Error("Dx12", "Fence wait timeout — GPU hung?");
                     return;
