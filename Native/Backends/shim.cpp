@@ -815,8 +815,11 @@
 	{
 		if (g_SrvNextSlot >= g_SrvHeapSize)
 		{
-			__debugbreak();
+			out_cpu->ptr = 0;
+			out_gpu->ptr = 0;
+			return;
 		}
+
 		D3D12_CPU_DESCRIPTOR_HANDLE base_cpu = g_SrvHeap->GetCPUDescriptorHandleForHeapStart();
 		D3D12_GPU_DESCRIPTOR_HANDLE base_gpu = g_SrvHeap->GetGPUDescriptorHandleForHeapStart();
 		UINT slot = g_SrvNextSlot++;
@@ -828,7 +831,7 @@
 		D3D12_CPU_DESCRIPTOR_HANDLE cpu,
 		D3D12_GPU_DESCRIPTOR_HANDLE gpu)
 	{
-		// Bump allocator: no reclaim.
+		// TODO: bump allocator без reclaim.
 	}
 
 	bool shim_ImplDX12_Init(

@@ -6,7 +6,7 @@ internal sealed unsafe class Dx12Backend
 {
     private const int FRAMES_IN_FLIGHT = 2;
     private const int RTV_HEAP_SIZE = 3;
-    private const int SRV_HEAP_SIZE = 64;
+    private const int SRV_HEAP_SIZE = 256;
 
     private const int VT_DEV_CREATE_ALLOC = 9;
     private const int VT_DEV_CREATE_LIST = 12;
