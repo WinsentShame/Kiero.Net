@@ -27,21 +27,23 @@ internal sealed unsafe class Dx12Backend
     private nint swapChain;
     private nint device;
     private nint queue;
-
     private nint rtvHeap;
     private uint rtvSize;
-    private nuint rtvHeapCpuStart;
 
     private nint srvHeap;
+    private nint fence;
+
+    private nuint rtvHeapCpuStart;
 
     private nint[] allocators = new nint[FRAMES_IN_FLIGHT];
     private nint[] lists = new nint[FRAMES_IN_FLIGHT];
-    private nint fence;
+    private nint[] cachedBackbuffers = new nint[RTV_HEAP_SIZE];
     private ulong[] fenceValues = new ulong[FRAMES_IN_FLIGHT];
-    private ulong fenceCounter;
-    private int frameIndex;
 
     private bool ready;
+
+    private int frameIndex;
+    private ulong fenceCounter;
     private long frameCounter;
 
     public bool isReady => ready;
@@ -191,9 +193,14 @@ internal sealed unsafe class Dx12Backend
         {
             var rtvHandle = new D3D12Structs.D3D12_CPU_DESCRIPTOR_HANDLE { ptr = rtvHeapCpuStart + (nuint)(idx * rtvSize) };
 
-            nint vtDev = *(nint*)device;
-            var createRtv = (delegate* unmanaged[Stdcall]<nint, nint, nint, D3D12Structs.D3D12_CPU_DESCRIPTOR_HANDLE, void>)(*(nint*)(vtDev + VT_DEV_CREATE_RTV * IntPtr.Size));
-            createRtv(device, backbuffer, 0, rtvHandle);
+            if (cachedBackbuffers[idx] != backbuffer)
+            {
+                nint vtDev = *(nint*)device;
+                var createRtv = (delegate* unmanaged[Stdcall]<nint, nint, nint, D3D12Structs.D3D12_CPU_DESCRIPTOR_HANDLE, void>)(*(nint*)(vtDev + VT_DEV_CREATE_RTV * IntPtr.Size));
+                createRtv(device, backbuffer, 0, rtvHandle);
+                cachedBackbuffers[idx] = backbuffer;
+                Logger.Info("Dx12", $"RTV created for idx={idx} bb=0x{backbuffer:X}");
+            }
 
             var barrier = new D3D12Structs.D3D12_RESOURCE_BARRIER
             {
