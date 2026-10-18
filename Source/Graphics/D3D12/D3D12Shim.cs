@@ -11,4 +11,7 @@ public static unsafe class D3D12Shim
 
     [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_D3D12_CommandQueueGetType")]
     public static extern int QueueGetType(nint queue);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_D3D12_FenceGetCompletedValue")]
+    public static extern ulong FenceGetCompletedValue(nint fence);
 }

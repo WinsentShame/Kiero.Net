@@ -158,6 +158,20 @@ internal sealed unsafe class Dx12Backend
 
         int fi = frameIndex;
 
+        if (fenceValues[fi] > 0)
+        {
+            int spins = 0;
+            while (D3D12Shim.FenceGetCompletedValue(fence) < fenceValues[fi])
+            {
+                System.Threading.Thread.Yield();
+                if (++spins > 10_000_000) 
+                {
+                    Logger.Error("Dx12", "Fence wait timeout — GPU hung?");
+                    return;
+                }
+            }
+        }
+
         nint vtAlloc = *(nint*)allocators[fi];
         var allocReset = (delegate* unmanaged[Stdcall]<nint, int>)(*(nint*)(vtAlloc + 8 * IntPtr.Size));
         allocReset(allocators[fi]);
