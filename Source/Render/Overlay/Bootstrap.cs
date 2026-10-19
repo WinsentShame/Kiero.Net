@@ -37,7 +37,7 @@ public static class Bootstrap
 
     private static bool InstallDx11()
     {
-        if (!Dx11PresentFinder.TryGet(out nint presentAddr, out nint present1Addr, out nint resizeAddr))
+        if (!Dx11PresentFinder.TryGet(out nint presentAddr, out nint present1Addr, out nint resizeAddr, out nint resize1Addr))
         {
             Logger.Error("Bootstrap", "Dx11PresentFinder failed");
             return false;
@@ -49,6 +49,13 @@ public static class Bootstrap
             Logger.Info("Bootstrap", "ResizeBuffers hook installed");
         else
             Logger.Warn("Bootstrap", "ResizeBuffers hook not installed");
+
+        if (resize1Addr != 0 && ResizeBuffersHook.InstallResizeBuffers1(resize1Addr))
+            Logger.Info("Bootstrap", "ResizeBuffers1 hook installed");
+        else if (resize1Addr == 0)
+            Logger.Info("Bootstrap", "ResizeBuffers1 not available (pre-IDXGISwapChain3)");
+        else
+            Logger.Warn("Bootstrap", "ResizeBuffers1 hook not installed");
 
         if (presentAddr == 0)
         {

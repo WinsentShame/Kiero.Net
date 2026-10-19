@@ -9,7 +9,7 @@ namespace Kiero.Net;
 public static unsafe class Utf8
 {
     private const int ARENA_SIZE = 32 * 1024;
-    private const int BIG_SLOTS = 4;
+    private const int BIG_SLOTS = 16;
 
     [ThreadStatic] private static byte[]? ARENA;
     [ThreadStatic] private static int OFFSET;

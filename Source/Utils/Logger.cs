@@ -84,7 +84,12 @@ public static class Logger
     public static void Error(string tag, string message) => Write(LogLevel.Error, tag, message);
 
     public static void Error(string tag, Exception ex)
-        => Write(LogLevel.Error, tag, $"{ex.GetType().Name}: {ex.Message}\n{ex.StackTrace}");
+    {
+        string text;
+        try { text = ex.ToString(); }
+        catch { text = $"{ex.GetType().Name}: {ex.Message}"; }
+        Write(LogLevel.Error, tag, text);
+    }
 
     private static void Write(LogLevel level, string tag, string message)
     {

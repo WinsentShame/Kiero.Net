@@ -6,6 +6,7 @@ namespace Kiero.Net;
 public static unsafe class ResizeBuffersHook
 {
     private static nint original;
+    private static nint original1;
 
     public static bool Install(nint addr)
     {
@@ -20,11 +21,23 @@ public static unsafe class ResizeBuffersHook
         if (MinHook.EnableHook((void*)addr) != 0) return false;
         return true;
     }
-
-    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvStdcall) })]
-    private static int Detour(nint sc, uint bufferCount, uint width, uint height, uint newFormat, uint flags)
+    public static bool InstallResizeBuffers1(nint addr)
     {
-        Logger.Info("ResizeBuffers", $"sc=0x{sc:X} count={bufferCount} {width}x{height} fmt={newFormat} flags=0x{flags:X}");
+        if (addr == 0) return false;
+
+        void* detour = (delegate* unmanaged[Stdcall]<nint, uint, uint, uint, uint, uint, nint, nint, int>)&Detour1;
+        void* orig = null;
+        int hr = MinHook.CreateHook((void*)addr, detour, &orig);
+        if (hr != 0) { Logger.Warn("ResizeBuffers1", $"CreateHook hr={hr}"); return false; }
+        original1 = (nint)orig;
+
+        if (MinHook.EnableHook((void*)addr) != 0) return false;
+        return true;
+    }
+
+    private static void OnResize(nint sc, uint bufferCount, uint width, uint height, uint newFormat, uint flags, string tag)
+    {
+        Logger.Info(tag, $"sc=0x{sc:X} count={bufferCount} {width}x{height} fmt={newFormat} flags=0x{flags:X}");
 
         try
         {
@@ -39,8 +52,20 @@ public static unsafe class ResizeBuffersHook
                 if (be != null) be.OnResizeBuffers();
             }
         }
-        catch (System.Exception ex) { Logger.Error("ResizeBuffers", ex); }
+        catch (System.Exception ex) { Logger.Error(tag, ex); }
+    }
 
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvStdcall) })]
+    private static int Detour(nint sc, uint bufferCount, uint width, uint height, uint newFormat, uint flags)
+    {
+        OnResize(sc, bufferCount, width, height, newFormat, flags, "ResizeBuffers");
         return ((delegate* unmanaged[Stdcall]<nint, uint, uint, uint, uint, uint, int>)original)(sc, bufferCount, width, height, newFormat, flags);
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvStdcall) })]
+    private static int Detour1(nint sc, uint bufferCount, uint width, uint height, uint newFormat, uint flags, nint creationNodeMask, nint presentQueue)
+    {
+        OnResize(sc, bufferCount, width, height, newFormat, flags, "ResizeBuffers1");
+        return ((delegate* unmanaged[Stdcall]<nint, uint, uint, uint, uint, uint, nint, nint, int>)original1)(sc, bufferCount, width, height, newFormat, flags, creationNodeMask, presentQueue);
     }
 }

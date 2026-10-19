@@ -5,10 +5,14 @@ namespace Kiero.Net;
 public static unsafe class Dx11PresentFinder
 {
     public static bool TryGet(out nint present, out nint present1, out nint resizeBuffers)
+        => TryGet(out present, out present1, out resizeBuffers, out _);
+
+    public static bool TryGet(out nint present, out nint present1, out nint resizeBuffers, out nint resizeBuffers1)
     {
         present = 0;
         present1 = 0;
         resizeBuffers = 0;
+        resizeBuffers1 = 0;
 
         nint hwnd = Win32.CreateWindowExW(0, "STATIC", "kiero-dummy", 0, 0, 0, 1, 1, 0, 0, 0, 0);
         if (hwnd == 0) return false;
@@ -47,18 +51,36 @@ public static unsafe class Dx11PresentFinder
                 present = *(nint*)(vt + 8 * IntPtr.Size);
                 resizeBuffers = *(nint*)(vt + 13 * IntPtr.Size);
 
-                nint sc1 = 0;
-                Guid iid = Guids.IID_IDXGISwapChain1;
-                if (Com.QueryInterface(sc, &iid, &sc1) >= 0 && sc1 != 0)
+                nint sc3 = 0;
+                Guid iid3 = Guids.IID_IDXGISwapChain3;
+                if (Com.QueryInterface(sc, &iid3, &sc3) >= 0 && sc3 != 0)
                 {
                     try
                     {
-                        nint vt1 = *(nint*)sc1;
-                        present1 = *(nint*)(vt1 + 22 * IntPtr.Size);
+                        nint vt3 = *(nint*)sc3;
+                        present1 = *(nint*)(vt3 + 22 * IntPtr.Size);                   
+                        resizeBuffers1 = *(nint*)(vt3 + DxgiVt.SwapChain3_ResizeBuffers1 * IntPtr.Size);
                     }
                     finally
                     {
-                        Com.Release(sc1);
+                        Com.Release(sc3);
+                    }
+                }
+                else
+                {
+                    nint sc1 = 0;
+                    Guid iid1 = Guids.IID_IDXGISwapChain1;
+                    if (Com.QueryInterface(sc, &iid1, &sc1) >= 0 && sc1 != 0)
+                    {
+                        try
+                        {
+                            nint vt1 = *(nint*)sc1;
+                            present1 = *(nint*)(vt1 + 22 * IntPtr.Size);
+                        }
+                        finally
+                        {
+                            Com.Release(sc1);
+                        }
                     }
                 }
 
