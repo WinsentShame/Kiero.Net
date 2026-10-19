@@ -9,11 +9,15 @@ internal sealed unsafe class Dx11Backend
     private const int VT_OMSetRenderTargets = 33;
     private const int VT_GetImmediateContext = 40;
 
+    private const int MAX_BACKBUFFERS = 4; 
+
     private nint swapChain;
     private nint device;
     private nint context;
-    private nint rtv;
-    private nint rtvBb;
+
+    private nint[] rtvs = new nint[MAX_BACKBUFFERS];
+    private nint[] rtvBackbuffers = new nint[MAX_BACKBUFFERS];
+
     private bool ready;
     private long frameCounter;
 
@@ -54,32 +58,43 @@ internal sealed unsafe class Dx11Backend
 
     public void NewFrame() => ImGui.ImplDX11NewFrame();
 
-    public void ReleaseRenderTarget() { if (rtv != 0) { Com.Release(rtv); rtv = 0; } rtvBb = 0; }
+    public void ReleaseRenderTarget()
+    {
+        for (int i = 0; i < MAX_BACKBUFFERS; i++)
+        {
+            if (rtvs[i] != 0) { Com.Release(rtvs[i]); rtvs[i] = 0; }
+            rtvBackbuffers[i] = 0;
+        }
+    }
 
     public void RenderDrawData(nint drawData)
     {
         if (!ready || drawData == 0) return;
 
-        uint IDX = Dxgi.GetCurrentBackBufferIndex(swapChain);
-        nint bb = Dxgi.GetBackBuffer(swapChain, IDX, Guids.IID_ID3D11Texture2D);
+        uint idx = Dxgi.GetCurrentBackBufferIndex(swapChain);
+        if (idx >= MAX_BACKBUFFERS) idx = 0; 
+
+        nint bb = Dxgi.GetBackBuffer(swapChain, idx, Guids.IID_ID3D11Texture2D);
         if (bb == 0) return;
 
         try
         {
-            if (rtv == 0 || rtvBb != bb)
+            if (rtvs[idx] == 0 || rtvBackbuffers[idx] != bb)
             {
-                if (rtv != 0) { Com.Release(rtv); rtv = 0; }
+                if (rtvs[idx] != 0) { Com.Release(rtvs[idx]); rtvs[idx] = 0; }
 
                 nint newRtv = 0;
                 var createRtv = (delegate* unmanaged[Stdcall]<nint, nint, nint, nint*, int>)
                     ((*(void***)device)[VT_CreateRenderTargetView]);
                 int hr = createRtv(device, bb, 0, &newRtv);
                 if (hr < 0 || newRtv == 0) return;
-                rtv = newRtv;
-                rtvBb = bb;
+
+                rtvs[idx] = newRtv;
+                rtvBackbuffers[idx] = bb;
+                Logger.Info("Dx11", $"RTV created for idx={idx} bb=0x{bb:X}");
             }
 
-            nint rtvHandle = rtv;
+            nint rtvHandle = rtvs[idx];
             var omSet = (delegate* unmanaged[Stdcall]<nint, uint, nint*, nint, void>)
                 ((*(void***)context)[VT_OMSetRenderTargets]);
             omSet(context, 1, &rtvHandle, 0);
@@ -88,7 +103,7 @@ internal sealed unsafe class Dx11Backend
 
             long N = ++frameCounter;
             if (N == 1 || N % 600 == 0)
-                Logger.Info("Dx11", $"frame={N} idx={IDX} bb=0x{bb:X} rtv=0x{rtv:X}");
+                Logger.Info("Dx11", $"frame={N} idx={idx} bb=0x{bb:X} rtv=0x{rtvs[idx]:X}");
         }
         finally
         {
