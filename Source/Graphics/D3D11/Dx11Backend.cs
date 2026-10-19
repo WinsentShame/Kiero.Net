@@ -7,11 +7,13 @@ internal sealed unsafe class Dx11Backend
     private const int VT_GetDevice = 3;
     private const int VT_CreateRenderTargetView = 9;
     private const int VT_OMSetRenderTargets = 33;
+    private const int VT_OMGetRenderTargets = 89;
     private const int VT_GetImmediateContext = 40;
 
-    private const int MAX_BACKBUFFERS = 4; 
+    private const int MAX_BACKBUFFERS = 4;
 
     private nint swapChain;
+    private nint swapChain3; // IDXGISwapChain3 или 0
     private nint device;
     private nint context;
 
@@ -27,6 +29,18 @@ internal sealed unsafe class Dx11Backend
     {
         swapChain = sc;
         Logger.Info("Dx11", $"Init sc=0x{sc:X}");
+
+        nint sc3 = 0;
+        Guid iid3 = Guids.IID_IDXGISwapChain3;
+        if (Com.QueryInterface(sc, &iid3, &sc3) >= 0 && sc3 != 0)
+        {
+            swapChain3 = sc3;
+            Logger.Info("Dx11", $"swapChain3=0x{sc3:X} (GetCurrentBackBufferIndex OK)");
+        }
+        else
+        {
+            Logger.Warn("Dx11", "IDXGISwapChain3 not available, will render to buffer 0 only");
+        }
 
         nint bb = Dxgi.GetBackBuffer(sc, 0, Guids.IID_ID3D11Texture2D);
         if (bb == 0) { Logger.Error("Dx11", "backbuffer=0"); return false; }
@@ -71,11 +85,19 @@ internal sealed unsafe class Dx11Backend
     {
         if (!ready || drawData == 0) return;
 
-        uint idx = Dxgi.GetCurrentBackBufferIndex(swapChain);
-        if (idx >= MAX_BACKBUFFERS) idx = 0; 
+        uint idx = 0;
+        if (swapChain3 != 0)
+        {
+            idx = Dxgi.GetCurrentBackBufferIndex(swapChain3);
+            if (idx >= MAX_BACKBUFFERS) idx = 0;
+        }
 
         nint bb = Dxgi.GetBackBuffer(swapChain, idx, Guids.IID_ID3D11Texture2D);
         if (bb == 0) return;
+
+        nint oldRtv = 0;
+        nint oldDsv = 0;
+        bool haveOldTargets = false;
 
         try
         {
@@ -94,6 +116,19 @@ internal sealed unsafe class Dx11Backend
                 Logger.Info("Dx11", $"RTV created for idx={idx} bb=0x{bb:X}");
             }
 
+            try
+            {
+                var omGet = (delegate* unmanaged[Stdcall]<nint, uint, nint*, nint*, void>)
+                    ((*(void***)context)[VT_OMGetRenderTargets]);
+                nint tmpRtv = 0;
+                nint tmpDsv = 0;
+                omGet(context, 1, &tmpRtv, &tmpDsv);
+                oldRtv = tmpRtv;
+                oldDsv = tmpDsv;
+                haveOldTargets = true;
+            }
+            catch { haveOldTargets = false; }
+
             nint rtvHandle = rtvs[idx];
             var omSet = (delegate* unmanaged[Stdcall]<nint, uint, nint*, nint, void>)
                 ((*(void***)context)[VT_OMSetRenderTargets]);
@@ -101,12 +136,27 @@ internal sealed unsafe class Dx11Backend
 
             ImGui.ImplDX11RenderDrawData(drawData);
 
+            if (haveOldTargets)
+            {
+                if (oldRtv != 0 || oldDsv != 0)
+                {
+                    nint restoreRtv = oldRtv;
+                    omSet(context, oldRtv != 0 ? 1u : 0u, &restoreRtv, oldDsv);
+                }
+            }
+            else
+            {
+                omSet(context, 0, null, 0);
+            }
+
             long N = ++frameCounter;
             if (N == 1 || N % 600 == 0)
                 Logger.Info("Dx11", $"frame={N} idx={idx} bb=0x{bb:X} rtv=0x{rtvs[idx]:X}");
         }
         finally
         {
+            if (oldRtv != 0) Com.Release(oldRtv);
+            if (oldDsv != 0) Com.Release(oldDsv);
             Com.Release(bb);
         }
     }
@@ -121,5 +171,7 @@ internal sealed unsafe class Dx11Backend
         }
         if (context != 0) { Com.Release(context); context = 0; }
         if (device != 0) { Com.Release(device); device = 0; }
+        if (swapChain3 != 0) { Com.Release(swapChain3); swapChain3 = 0; }
+        swapChain = 0;
     }
 }

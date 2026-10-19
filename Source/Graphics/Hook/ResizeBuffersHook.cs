@@ -28,9 +28,16 @@ public static unsafe class ResizeBuffersHook
 
         try
         {
-            Dx11Backend be = Overlay.Dx11Backend;
-            if (be != null && Overlay.Dx11SwapChain == sc)
-                be.ReleaseRenderTarget();
+            if (Overlay.Dx11SwapChain == sc)
+            {
+                Dx11Backend be = Overlay.Dx11Backend;
+                if (be != null) be.ReleaseRenderTarget();
+            }
+            if (Overlay.Dx12SwapChain == sc)
+            {
+                Dx12Backend be = Overlay.Dx12Backend;
+                if (be != null) be.OnResizeBuffers();
+            }
         }
         catch (System.Exception ex) { Logger.Error("ResizeBuffers", ex); }
 
