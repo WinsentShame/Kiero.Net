@@ -136,11 +136,31 @@ public static unsafe class Overlay
         ImGui.IOSetDisplaySize(io, w, h);
         ImGui.IOSetDeltaTime(io, dt);
 
-        try { onInput?.Invoke(); } catch { }
+        try { onInput?.Invoke(); }
+        catch (Exception ex) { Logger.Error("OverlayInput", ex); }
 
         ImGui.NewFrame();
-        try { onDraw?.Invoke(); } catch { }
-        ImGui.Render();
+
+        bool drawSuccess = false;
+        try
+        {
+            onDraw?.Invoke();
+            drawSuccess = true;
+        }
+        catch (Exception ex)
+        {
+            Logger.Error("OverlayDraw", ex);
+        }
+
+        if (drawSuccess)
+        {
+            ImGui.Render();
+        }
+        else
+        {
+            ImGui.EndFrame();
+            return; 
+        }
 
         nint dd = ImGui.GetDrawData();
         if (dd == 0) return;
