@@ -650,6 +650,14 @@ extern "C" {
 	void shim_ImplDX12_InvalidateDeviceObjects();
 
 	// ============================================================
+	// OPENGL3 BACKEND
+	// ============================================================
+	bool shim_ImplOpenGL3_Init(const char* glsl_version);
+	void shim_ImplOpenGL3_Shutdown();
+	void shim_ImplOpenGL3_NewFrame();
+	void shim_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data);
+
+	// ============================================================
 	// D3D12 HELPERS (ABI-safe wrappers for C#)
 	// ============================================================
 	unsigned long long shim_D3D12_GetCPUDescriptorHandleForHeapStart(void* heap);

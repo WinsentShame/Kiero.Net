@@ -9,6 +9,7 @@
 #include "imgui_impl_dx11.h"
 #include "imgui_impl_dx12.h"
 #include "imgui_impl_win32.h"
+#include "imgui_impl_opengl3.h"
 
 
 	// ============================================================
@@ -650,7 +651,7 @@
 
 	void shim_ImDrawList_AddRect(ImDrawList* draw_list, float min_x, float min_y, float max_x, float max_y, unsigned int col, float rounding, int flags, float thickness)
 	{
-		draw_list->AddRect(ImVec2(min_x, min_y), ImVec2(max_x, max_y), col, rounding, (ImDrawFlags)flags, thickness);
+		draw_list->AddRect(ImVec2(min_x, min_y), ImVec2(max_x, max_y), col, rounding, thickness, (ImDrawFlags)flags);
 	}
 
 	void shim_ImDrawList_AddRectFilled(ImDrawList* draw_list, float min_x, float min_y, float max_x, float max_y, unsigned int col, float rounding, int flags)
@@ -717,6 +718,7 @@
 	{
 		draw_list->AddImageRounded((ImTextureID)user_texture_id, ImVec2(p_min_x, p_min_y), ImVec2(p_max_x, p_max_y), ImVec2(uv_min_x, uv_min_y), ImVec2(uv_max_x, uv_max_y), col, rounding, (ImDrawFlags)flags);
 	}
+
 
 	// ============================================================
 	// MISC
@@ -880,6 +882,14 @@
 	{
 		ImGui_ImplDX12_InvalidateDeviceObjects();
 	}
+
+	// ============================================================
+	// OPENGL3 BACKEND
+	// ============================================================
+	bool shim_ImplOpenGL3_Init(const char* glsl_version) { return ImGui_ImplOpenGL3_Init(glsl_version); }
+	void shim_ImplOpenGL3_Shutdown() { ImGui_ImplOpenGL3_Shutdown(); }
+	void shim_ImplOpenGL3_NewFrame() { ImGui_ImplOpenGL3_NewFrame(); }
+	void shim_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data) { ImGui_ImplOpenGL3_RenderDrawData(draw_data); }
 
 
 	// ============================================================
