@@ -10,29 +10,69 @@ public static class Bootstrap
         int waited = 0;
         int limit = (int)(moduleTimeout ?? TimeSpan.FromSeconds(60)).TotalMilliseconds;
 
-        bool has11 = false, has12 = false;
+        bool has11 = false, has12 = false, hasGl = false;
         while (waited < limit)
         {
             has11 = Win32.GetModuleHandleW("d3d11.dll") != 0;
             has12 = Win32.GetModuleHandleW("d3d12.dll") != 0;
-            if (has11 || has12) break;
+            hasGl = Win32.GetModuleHandleW("opengl32.dll") != 0;
+            if (has11 || has12 || hasGl) break;
             Thread.Sleep(200);
             waited += 200;
         }
 
-        Logger.Info("Bootstrap", $"after wait {waited}ms: d3d11={has11} d3d12={has12}");
-        if (!has11 && !has12) { Logger.Error("Bootstrap", "no d3d11/d3d12"); return false; }
-
-        var type = has12 ? KieroRenderType.D3D12 : KieroRenderType.D3D11;
-        var st = Kiero.Init(type);
-        if (st != KieroStatus.Success) { Logger.Error("Bootstrap", $"Kiero.Init({type}) -> {st}"); return false; }
+        Logger.Info("Bootstrap", $"after wait {waited}ms: d3d11={has11} d3d12={has12} opengl32={hasGl}");
+        if (!has11 && !has12 && !hasGl) { Logger.Error("Bootstrap", "no d3d11/d3d12/opengl32"); return false; }
 
         if (MinHook.Initialize() != 0) { Logger.Error("Bootstrap", "MinHook.Initialize failed"); return false; }
         Logger.Info("Bootstrap", "MinHook initialized");
 
-        var api = Kiero.GetRenderType();
-        Logger.Info("Bootstrap", $"Kiero api={api}");
-        return api == KieroRenderType.D3D12 ? InstallDx12() : InstallDx11();
+        bool anyInstalled = false;
+
+        if (hasGl)
+        {
+            if (InstallGl()) anyInstalled = true;
+        }
+
+        if (has12)
+        {
+            var st = Kiero.Init(KieroRenderType.D3D12);
+            if (st == KieroStatus.Success) { if (InstallDx12()) anyInstalled = true; }
+            else Logger.Warn("Bootstrap", $"Kiero.Init(D3D12) -> {st}, skip");
+        }
+        else if (has11)
+        {
+            var st = Kiero.Init(KieroRenderType.D3D11);
+            if (st == KieroStatus.Success) { if (InstallDx11()) anyInstalled = true; }
+            else Logger.Warn("Bootstrap", $"Kiero.Init(D3D11) -> {st}, skip");
+        }
+
+        if (!anyInstalled)
+        {
+            Logger.Error("Bootstrap", "no hooks installed");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool InstallGl()
+    {
+        if (!GlFinder.TryGet(out nint swapBuffersAddr))
+        {
+            Logger.Error("Bootstrap", "GlFinder failed");
+            return false;
+        }
+
+        Logger.Info("Bootstrap", $"SwapBuffers=0x{swapBuffersAddr:X}");
+
+        if (!SwapBuffersHook.Install(swapBuffersAddr))
+        {
+            Logger.Error("Bootstrap", "SwapBuffers hook install failed");
+            return false;
+        }
+        Logger.Info("Bootstrap", "SwapBuffers hook installed");
+        return true;
     }
 
     private static bool InstallDx11()

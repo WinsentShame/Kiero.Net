@@ -1300,4 +1300,16 @@ public static unsafe class ImGui
 
     [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImplDX12_InvalidateDeviceObjects")]
     public static extern void ImplDX12InvalidateDeviceObjects();
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImplOpenGL3_Init")]
+    public static extern byte ImplOpenGL3Init(byte* glslVersion);
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImplOpenGL3_Shutdown")]
+    public static extern void ImplOpenGL3Shutdown();
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImplOpenGL3_NewFrame")]
+    public static extern void ImplOpenGL3NewFrame();
+
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImplOpenGL3_RenderDrawData")]
+    public static extern void ImplOpenGL3RenderDrawData(nint drawData);
 }

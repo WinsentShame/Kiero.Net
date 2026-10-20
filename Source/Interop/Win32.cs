@@ -16,4 +16,13 @@ public static unsafe class Win32
 
     [DllImport("user32.dll")]
     public static extern bool DestroyWindow(nint hwnd);
+
+    [DllImport("user32.dll")]
+    public static extern nint WindowFromDC(nint hdc);
+
+    [DllImport("user32.dll")]
+    public static extern bool GetClientRect(nint hwnd, out RECT rect);
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct RECT { public int Left, Top, Right, Bottom; }
 }
