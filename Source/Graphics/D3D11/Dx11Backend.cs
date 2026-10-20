@@ -13,7 +13,7 @@ internal sealed unsafe class Dx11Backend
     private const int MAX_BACKBUFFERS = 4;
 
     private nint swapChain;
-    private nint swapChain3; // IDXGISwapChain3 или 0
+    private nint swapChain3;
     private nint device;
     private nint context;
 
