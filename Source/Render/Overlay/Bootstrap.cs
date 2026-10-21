@@ -119,7 +119,6 @@ public static unsafe class Bootstrap
             return false;
         }
 
-        Overlay.SetD3D9Mode();
         Logger.Info("Bootstrap", "Dx9 Present hook installed");
         return true;
     }

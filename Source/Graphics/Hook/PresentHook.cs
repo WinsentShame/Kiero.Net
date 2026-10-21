@@ -85,7 +85,7 @@ public static unsafe class PresentHook
         if (n <= 3 || n % 300 == 0)
             Logger.Info("Present", $"Present #{n} sc=0x{sc:X} flags=0x{flags:X}");
 
-        try { Overlay.OnPresentInternal(sc, flags); }
+        try { Overlay.OnPresent(sc, flags, false); }
         catch (System.Exception ex) { Logger.Error("Present", ex); }
 
         return ((delegate* unmanaged[Stdcall]<nint, uint, uint, int>)originalPresent)(sc, sync, flags);
@@ -98,7 +98,7 @@ public static unsafe class PresentHook
         if (n <= 3 || n % 300 == 0)
             Logger.Info("Present", $"Present1 #{n} sc=0x{sc:X} flags=0x{flags:X}");
 
-        try { Overlay.OnPresentInternal(sc, flags); }
+        try { Overlay.OnPresent(sc, flags, false); }
         catch (System.Exception ex) { Logger.Error("Present", ex); }
 
         return ((delegate* unmanaged[Stdcall]<nint, uint, uint, void*, int>)originalPresent1)(sc, sync, flags, presentParams);
@@ -111,7 +111,7 @@ public static unsafe class PresentHook
         if (n <= 3 || n % 300 == 0)
             Logger.Info("Present", $"PresentDx9 #{n} dev=0x{device:X}");
 
-        try { Overlay.OnPresentInternal(device, 0); }
+        try { Overlay.OnPresent(device, 0, false); }
         catch (System.Exception ex) { Logger.Error("Present", ex); }
 
         return ((delegate* unmanaged[Stdcall]<nint, nint, nint, nint, nint, int>)originalPresentDx9)(device, srcRect, dstRect, hwndOverride, dirtyRegion);
