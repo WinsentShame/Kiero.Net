@@ -6,6 +6,8 @@
 
 #include "shim.h"
 #include "imgui.h"
+#include "imgui_impl_dx9.h"
+#include "imgui_impl_dx10.h"
 #include "imgui_impl_dx11.h"
 #include "imgui_impl_dx12.h"
 #include "imgui_impl_win32.h"
@@ -792,6 +794,16 @@
 	void* shim_MemAlloc(size_t size) { return ImGui::MemAlloc(size); }
 	void shim_MemFree(void* ptr) { ImGui::MemFree(ptr); }
 #endif
+
+	// ============================================================
+	// DX9 BACKEND
+	// ============================================================
+	bool shim_ImplDX9_Init(void* device) { return ImGui_ImplDX9_Init((IDirect3DDevice9*)device); }
+	void shim_ImplDX9_Shutdown() { ImGui_ImplDX9_Shutdown(); }
+	void shim_ImplDX9_NewFrame() { ImGui_ImplDX9_NewFrame(); }
+	void shim_ImplDX9_RenderDrawData(ImDrawData* draw_data) { ImGui_ImplDX9_RenderDrawData(draw_data); }
+	bool shim_ImplDX9_CreateDeviceObjects() { return ImGui_ImplDX9_CreateDeviceObjects(); }
+	void shim_ImplDX9_InvalidateDeviceObjects() { ImGui_ImplDX9_InvalidateDeviceObjects(); }
 
 	// ============================================================
 	// DX11 BACKEND

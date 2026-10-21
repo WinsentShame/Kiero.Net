@@ -623,6 +623,16 @@ extern "C" {
 #endif
 
 	// ============================================================
+	// DX9 BACKEND
+	// ============================================================
+	bool shim_ImplDX9_Init(void* device);
+	void shim_ImplDX9_Shutdown();
+	void shim_ImplDX9_NewFrame();
+	void shim_ImplDX9_RenderDrawData(ImDrawData* draw_data);
+	bool shim_ImplDX9_CreateDeviceObjects();
+	void shim_ImplDX9_InvalidateDeviceObjects();
+
+	// ============================================================
 	// DX11 BACKEND
 	// ============================================================
 	bool shim_ImplDX11_Init(ID3D11Device* dev, ID3D11DeviceContext* ctx);

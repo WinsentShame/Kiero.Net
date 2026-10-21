@@ -14,6 +14,7 @@ public static unsafe class Overlay
     internal static nint Dx12SwapChain => swapChain;
     internal static Dx11Backend Dx11Backend => backend11;
     internal static Dx12Backend Dx12Backend => backend12;
+    internal static Dx9Backend Dx9Backend => backend9;
 
     public static bool isReady => ready;
 
@@ -25,10 +26,12 @@ public static unsafe class Overlay
     private static volatile bool started;
     private static long lastTicks;
     private static bool queueWaitLogged;
+    private static bool isD3D9Forced = false;
 
     [ThreadStatic] private static bool isRendering;
 
     private static RenderApi api = RenderApi.None;
+    private static Dx9Backend backend9;
     private static Dx11Backend backend11;
     private static Dx12Backend backend12;
     private static GlBackend backendGl;
@@ -39,6 +42,8 @@ public static unsafe class Overlay
         started = true;
         Logger.Info("Overlay", "Initialize");
     }
+
+    internal static void SetD3D9Mode() => isD3D9Forced = true;
 
     internal static void OnPresentInternal(nint sc, uint flags)
     {
@@ -109,8 +114,9 @@ public static unsafe class Overlay
         if (initAttempted) return false;
 
         bool isGl = hdc != 0;
+        bool isDx9 = !isGl && (Kiero.GetRenderType() == KieroRenderType.D3D9 || isD3D9Forced);
 
-        if (!isGl && Kiero.GetRenderType() == KieroRenderType.D3D12 && ExecuteCommandListsHook.LastQueue == 0)
+        if (!isGl && !isDx9 && Kiero.GetRenderType() == KieroRenderType.D3D12 && ExecuteCommandListsHook.LastQueue == 0)
         {
             if (!queueWaitLogged)
             {
@@ -127,6 +133,10 @@ public static unsafe class Overlay
         if (isGl)
         {
             Logger.Info("Overlay", $"InitImGui hdc=0x{hdc:X}");
+        }
+        else if (isDx9)
+        {
+            Logger.Info("Overlay", $"InitImGui dev=0x{sc:X}");
         }
         else
         {
@@ -175,6 +185,20 @@ public static unsafe class Overlay
                 return false;
             }
             api = RenderApi.Gl;
+        }
+        else if (isDx9)
+        {
+            backend9 = new Dx9Backend();
+            if (!backend9.Init(sc))
+            {
+                Logger.Error("Overlay", "Dx9Backend.Init failed");
+                backend9 = null;
+                ImGui.DestroyContext(context); context = 0;
+                initAttempted = false;
+                return false;
+            }
+            api = RenderApi.Dx9;
+            swapChain = sc;
         }
         else
         {
@@ -232,6 +256,12 @@ public static unsafe class Overlay
             w = rc.Right - rc.Left;
             h = rc.Bottom - rc.Top;
         }
+        else if (api == RenderApi.Dx9)
+        {
+            if (!backend9.GetSize(out int w9, out int h9)) return;
+            w = w9;
+            h = h9;
+        }
         else
         {
             if (!Dxgi.TryGetSize(swapChain, out uint wu, out uint hu)) return;
@@ -248,7 +278,8 @@ public static unsafe class Overlay
         ImGui.SetCurrentContext(context);
         nint io = ImGui.GetIO();
 
-        if (api == RenderApi.Dx11) backend11.NewFrame();
+        if (api == RenderApi.Dx9) backend9.NewFrame();
+        else if (api == RenderApi.Dx11) backend11.NewFrame();
         else if (api == RenderApi.Dx12) backend12.NewFrame();
         else backendGl.NewFrame();
 
@@ -271,7 +302,8 @@ public static unsafe class Overlay
         if (dd == 0) return;
         if (ImGui.DrawDataVtxCount(dd) <= 0) return;
 
-        if (api == RenderApi.Dx11) backend11.RenderDrawData(dd);
+        if (api == RenderApi.Dx9) backend9.RenderDrawData(dd);
+        else if (api == RenderApi.Dx11) backend11.RenderDrawData(dd);
         else if (api == RenderApi.Dx12) backend12.RenderDrawData(dd);
         else backendGl.RenderDrawData(dd);
     }
@@ -280,6 +312,7 @@ public static unsafe class Overlay
     {
         try
         {
+            if (backend9 != null) { backend9.Shutdown(); backend9 = null; }
             if (backend11 != null) { backend11.Shutdown(); backend11 = null; }
             if (backend12 != null) { backend12.Shutdown(); backend12 = null; }
             if (backendGl != null) { backendGl.Shutdown(); backendGl = null; }

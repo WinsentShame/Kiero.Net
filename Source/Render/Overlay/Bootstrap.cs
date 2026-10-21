@@ -3,26 +3,27 @@ using System.Threading;
 
 namespace Kiero.Net;
 
-public static class Bootstrap
+public static unsafe class Bootstrap
 {
     public static bool Start(TimeSpan? moduleTimeout = null)
     {
         int waited = 0;
         int limit = (int)(moduleTimeout ?? TimeSpan.FromSeconds(60)).TotalMilliseconds;
 
-        bool has11 = false, has12 = false, hasGl = false;
+        bool has9 = false, has11 = false, has12 = false, hasGl = false;
         while (waited < limit)
         {
+            has9 = Win32.GetModuleHandleW("d3d9.dll") != 0;
             has11 = Win32.GetModuleHandleW("d3d11.dll") != 0;
             has12 = Win32.GetModuleHandleW("d3d12.dll") != 0;
             hasGl = Win32.GetModuleHandleW("opengl32.dll") != 0;
-            if (has11 || has12 || hasGl) break;
+            if (has9 || has11 || has12 || hasGl) break;
             Thread.Sleep(200);
             waited += 200;
         }
 
-        Logger.Info("Bootstrap", $"after wait {waited}ms: d3d11={has11} d3d12={has12} opengl32={hasGl}");
-        if (!has11 && !has12 && !hasGl) { Logger.Error("Bootstrap", "no d3d11/d3d12/opengl32"); return false; }
+        Logger.Info("Bootstrap", $"after wait {waited}ms: d3d9={has9} d3d11={has11} d3d12={has12} opengl32={hasGl}");
+        if (!has9 && !has11 && !has12 && !hasGl) { Logger.Error("Bootstrap", "no d3d9/d3d11/d3d12/opengl32"); return false; }
 
         if (MinHook.Initialize() != 0) { Logger.Error("Bootstrap", "MinHook.Initialize failed"); return false; }
         Logger.Info("Bootstrap", "MinHook initialized");
@@ -34,7 +35,19 @@ public static class Bootstrap
             if (InstallGl()) anyInstalled = true;
         }
 
-        if (has12)
+        if (has9)
+        {
+            var st = Kiero.Init(KieroRenderType.D3D9);
+            if (st == KieroStatus.Success)
+            {
+                if (InstallDx9()) anyInstalled = true;
+            }
+            else
+            {
+                Logger.Warn("Bootstrap", $"Kiero.Init(D3D9) -> {st}, skip");
+            }
+        }
+        else if (has12)
         {
             var st = Kiero.Init(KieroRenderType.D3D12);
             if (st == KieroStatus.Success) { if (InstallDx12()) anyInstalled = true; }
@@ -72,6 +85,42 @@ public static class Bootstrap
             return false;
         }
         Logger.Info("Bootstrap", "SwapBuffers hook installed");
+        return true;
+    }
+
+    private static bool InstallDx9()
+    {
+        nint methods = Kiero.GetMethodsTable();
+        if (methods == 0)
+        {
+            Logger.Error("Bootstrap", "Kiero methods table is null");
+            return false;
+        }
+
+        nint resetAddr = *(nint*)(methods + 16 * IntPtr.Size);
+        nint presentAddr = *(nint*)(methods + 17 * IntPtr.Size);
+
+        Logger.Info("Bootstrap", $"Dx9 Present=0x{presentAddr:X} Reset=0x{resetAddr:X}");
+
+        if (resetAddr == 0 || presentAddr == 0)
+        {
+            Logger.Error("Bootstrap", "Dx9 vtable methods are null");
+            return false;
+        }
+
+        if (ResizeBuffersHook.InstallDx9Reset(resetAddr))
+            Logger.Info("Bootstrap", "Dx9 Reset hook installed");
+        else
+            Logger.Warn("Bootstrap", "Dx9 Reset hook not installed");
+
+        if (!PresentHook.InstallDx9(presentAddr))
+        {
+            Logger.Error("Bootstrap", "Dx9 Present hook install failed");
+            return false;
+        }
+
+        Overlay.SetD3D9Mode();
+        Logger.Info("Bootstrap", "Dx9 Present hook installed");
         return true;
     }
 

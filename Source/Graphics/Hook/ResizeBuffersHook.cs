@@ -7,6 +7,7 @@ public static unsafe class ResizeBuffersHook
 {
     private static nint original;
     private static nint original1;
+    private static nint originalDx9Reset;
 
     public static bool Install(nint addr)
     {
@@ -21,6 +22,7 @@ public static unsafe class ResizeBuffersHook
         if (MinHook.EnableHook((void*)addr) != 0) return false;
         return true;
     }
+
     public static bool InstallResizeBuffers1(nint addr)
     {
         if (addr == 0) return false;
@@ -30,6 +32,20 @@ public static unsafe class ResizeBuffersHook
         int hr = MinHook.CreateHook((void*)addr, detour, &orig);
         if (hr != 0) { Logger.Warn("ResizeBuffers1", $"CreateHook hr={hr}"); return false; }
         original1 = (nint)orig;
+
+        if (MinHook.EnableHook((void*)addr) != 0) return false;
+        return true;
+    }
+
+    public static bool InstallDx9Reset(nint addr)
+    {
+        if (addr == 0) return false;
+
+        void* detour = (delegate* unmanaged[Stdcall]<nint, nint, int>)&DetourDx9Reset;
+        void* orig = null;
+        int hr = MinHook.CreateHook((void*)addr, detour, &orig);
+        if (hr != 0) { Logger.Warn("Reset", $"CreateHook hr={hr}"); return false; }
+        originalDx9Reset = (nint)orig;
 
         if (MinHook.EnableHook((void*)addr) != 0) return false;
         return true;
@@ -67,5 +83,24 @@ public static unsafe class ResizeBuffersHook
     {
         OnResize(sc, bufferCount, width, height, newFormat, flags, "ResizeBuffers1");
         return ((delegate* unmanaged[Stdcall]<nint, uint, uint, uint, uint, uint, nint, nint, int>)original1)(sc, bufferCount, width, height, newFormat, flags, creationNodeMask, presentQueue);
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvStdcall) })]
+    private static int DetourDx9Reset(nint device, nint presentParams)
+    {
+        Logger.Info("Reset", $"Dx9 device=0x{device:X}");
+
+        try { Overlay.Dx9Backend?.OnReset(); }
+        catch (System.Exception ex) { Logger.Error("Reset", ex); }
+
+        int hr = ((delegate* unmanaged[Stdcall]<nint, nint, int>)originalDx9Reset)(device, presentParams);
+
+        if (hr >= 0)
+        {
+            try { Overlay.Dx9Backend?.OnResetPost(); }
+            catch (System.Exception ex) { Logger.Error("Reset", ex); }
+        }
+
+        return hr;
     }
 }

@@ -8,7 +8,7 @@ if errorlevel 1 goto :err
 
 echo === ImGui backends ===
 cl /c /O2 /EHsc /MD /wd4996 /I. /IImGui /IBackends ^
-   Backends\imgui_impl_win32.cpp Backends\imgui_impl_dx11.cpp Backends\imgui_impl_dx12.cpp Backends\imgui_impl_opengl3.cpp
+   Backends\imgui_impl_win32.cpp Backends\imgui_impl_dx11.cpp Backends\imgui_impl_dx12.cpp Backends\imgui_impl_opengl3.cpp Backends\imgui_impl_dx9.cpp
 if errorlevel 1 goto :err
 
 echo === Kiero ===
