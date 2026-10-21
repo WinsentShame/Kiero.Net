@@ -12,9 +12,9 @@ public static unsafe class Overlay
 
     internal static nint Dx11SwapChain => swapChain;
     internal static nint Dx12SwapChain => swapChain;
-    internal static Dx11Backend Dx11Backend => backend11;
-    internal static Dx12Backend Dx12Backend => backend12;
-    internal static Dx9Backend Dx9Backend => backend9;
+    internal static D3D11Backend Dx11Backend => backend11;
+    internal static D3D12Backend Dx12Backend => backend12;
+    internal static D3D9Backend Dx9Backend => backend9;
 
     public static bool isReady => ready;
 
@@ -30,10 +30,10 @@ public static unsafe class Overlay
     [ThreadStatic] private static bool isRendering;
 
     private static RenderApi api = RenderApi.None;
-    private static Dx9Backend backend9;
-    private static Dx11Backend backend11;
-    private static Dx12Backend backend12;
-    private static GlBackend backendGl;
+    private static D3D9Backend backend9;
+    private static D3D11Backend backend11;
+    private static D3D12Backend backend12;
+    private static OpenglBackend backendGl;
 
     public static void Initialize()
     {
@@ -170,10 +170,10 @@ public static unsafe class Overlay
 
         if (isGl)
         {
-            backendGl = new GlBackend();
+            backendGl = new OpenglBackend();
             if (!backendGl.Init(hdc))
             {
-                Logger.Error("Overlay", "GlBackend.Init failed");
+                Logger.Error("Overlay", "OpenglBackend.Init failed");
                 backendGl = null;
                 ImGui.DestroyContext(context); context = 0;
                 initAttempted = false;
@@ -183,10 +183,10 @@ public static unsafe class Overlay
         }
         else if (isDx9)
         {
-            backend9 = new Dx9Backend();
+            backend9 = new D3D9Backend();
             if (!backend9.Init(sc))
             {
-                Logger.Error("Overlay", "Dx9Backend.Init failed");
+                Logger.Error("Overlay", "D3D9Backend.Init failed");
                 backend9 = null;
                 ImGui.DestroyContext(context); context = 0;
                 initAttempted = false;
@@ -197,10 +197,10 @@ public static unsafe class Overlay
         }
         else if (isDx12)
         {
-            backend12 = new Dx12Backend();
+            backend12 = new D3D12Backend();
             if (!backend12.Init(sc, (int)dxFmt))
             {
-                Logger.Error("Overlay", "Dx12Backend.Init failed");
+                Logger.Error("Overlay", "D3D12Backend.Init failed");
                 backend12 = null;
                 ImGui.DestroyContext(context); context = 0;
                 initAttempted = false;
@@ -211,10 +211,10 @@ public static unsafe class Overlay
         }
         else if (isDx11)
         {
-            backend11 = new Dx11Backend();
+            backend11 = new D3D11Backend();
             if (!backend11.Init(sc))
             {
-                Logger.Error("Overlay", "Dx11Backend.Init failed");
+                Logger.Error("Overlay", "D3D11Backend.Init failed");
                 backend11 = null;
                 ImGui.DestroyContext(context); context = 0;
                 initAttempted = false;

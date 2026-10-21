@@ -2,7 +2,7 @@
 
 namespace Kiero.Net;
 
-public static unsafe class Dx9Finder
+public static unsafe class D3D9Finder
 {
     public static bool TryGet(out nint present, out nint reset)
     {
@@ -39,7 +39,7 @@ public static unsafe class Dx9Finder
                 present = *(nint*)(vt + 17 * IntPtr.Size);
                 reset = *(nint*)(vt + 16 * IntPtr.Size);
 
-                Logger.Info("Dx9Finder", $"Present=0x{present:X} Reset=0x{reset:X}");
+                Logger.Info("D3D9Finder", $"Present=0x{present:X} Reset=0x{reset:X}");
                 return present != 0;
             }
             finally

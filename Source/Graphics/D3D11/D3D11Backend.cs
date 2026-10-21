@@ -2,7 +2,7 @@
 
 namespace Kiero.Net;
 
-internal sealed unsafe class Dx11Backend
+internal sealed unsafe class D3D11Backend
 {
     private const int VT_GetDevice = 3;
     private const int VT_CreateRenderTargetView = 9;

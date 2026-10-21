@@ -71,9 +71,9 @@ public static unsafe class Bootstrap
 
     private static bool InstallGl()
     {
-        if (!GlFinder.TryGet(out nint swapBuffersAddr))
+        if (!OpenglFinder.TryGet(out nint swapBuffersAddr))
         {
-            Logger.Error("Bootstrap", "GlFinder failed");
+            Logger.Error("Bootstrap", "OpenglFinder failed");
             return false;
         }
 
@@ -125,9 +125,9 @@ public static unsafe class Bootstrap
 
     private static bool InstallDx11()
     {
-        if (!Dx11PresentFinder.TryGet(out nint presentAddr, out nint present1Addr, out nint resizeAddr, out nint resize1Addr))
+        if (!D3D11Finder.TryGet(out nint presentAddr, out nint present1Addr, out nint resizeAddr, out nint resize1Addr))
         {
-            Logger.Error("Bootstrap", "Dx11PresentFinder failed");
+            Logger.Error("Bootstrap", "D3D11Finder failed");
             return false;
         }
 
@@ -171,20 +171,20 @@ public static unsafe class Bootstrap
 
     private static bool InstallDx12()
     {
-        if (!Dx11PresentFinder.TryGet(out nint presentAddr, out nint present1Addr, out nint resizeAddr))
+        if (!D3D11Finder.TryGet(out nint presentAddr, out nint present1Addr, out nint resizeAddr))
         {
-            Logger.Error("Bootstrap", "Dx11PresentFinder failed");
+            Logger.Error("Bootstrap", "D3D11Finder failed");
             return false;
         }
 
         Logger.Info("Bootstrap", $"Dx12 via Dx11 vtable Present=0x{presentAddr:X} Present1=0x{present1Addr:X} ResizeBuffers=0x{resizeAddr:X}");
-        if (Dx12ExecuteCommandListsFinder.TryGet(out nint execCmdListsAddr))
+        if (D3D12Finder.TryGet(out nint execCmdListsAddr))
         {
             Logger.Info("Bootstrap", "ExecuteCommandLists hook installed");
         }
         else
         {
-            Logger.Warn("Bootstrap", "Dx12ExecuteCommandListsFinder failed (Hook may still be active)");
+            Logger.Warn("Bootstrap", "D3D12Finder failed (Hook may still be active)");
         }
 
         if (resizeAddr != 0 && ResizeBuffersHook.Install(resizeAddr))

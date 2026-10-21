@@ -8,4 +8,7 @@
     <AssemblyName>Kiero.Net</AssemblyName>
     <RootNamespace>Kiero.Net</RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+    <Folder Include="Source\Graphics\D3D10\" />
+  </ItemGroup>
 </Project>

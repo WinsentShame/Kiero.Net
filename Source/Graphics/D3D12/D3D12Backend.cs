@@ -2,7 +2,7 @@
 
 namespace Kiero.Net;
 
-internal sealed unsafe class Dx12Backend
+internal sealed unsafe class D3D12Backend
 {
     private const int FRAMES_IN_FLIGHT = 2;
     private const int SRV_HEAP_SIZE = 256;

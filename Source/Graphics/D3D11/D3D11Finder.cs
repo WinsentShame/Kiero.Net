@@ -2,7 +2,7 @@
 
 namespace Kiero.Net;
 
-public static unsafe class Dx11PresentFinder
+public static unsafe class D3D11Finder
 {
     public static bool TryGet(out nint present, out nint present1, out nint resizeBuffers)
         => TryGet(out present, out present1, out resizeBuffers, out _);

@@ -1,6 +1,6 @@
 ﻿namespace Kiero.Net;
 
-internal sealed unsafe class GlBackend
+internal sealed unsafe class OpenglBackend
 {
     private nint hdc;
     private nint hwnd;

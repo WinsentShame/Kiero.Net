@@ -2,7 +2,7 @@
 
 namespace Kiero.Net;
 
-internal sealed unsafe class Dx9Backend
+internal sealed unsafe class D3D9Backend
 {
     private nint device;
     private bool ready;

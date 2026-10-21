@@ -59,12 +59,12 @@ public static unsafe class ResizeBuffersHook
         {
             if (Overlay.Dx11SwapChain == sc)
             {
-                Dx11Backend be = Overlay.Dx11Backend;
+                D3D11Backend be = Overlay.Dx11Backend;
                 if (be != null) be.ReleaseRenderTarget();
             }
             if (Overlay.Dx12SwapChain == sc)
             {
-                Dx12Backend be = Overlay.Dx12Backend;
+                D3D12Backend be = Overlay.Dx12Backend;
                 if (be != null) be.OnResizeBuffers();
             }
         }
