@@ -10,5 +10,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="Source\Graphics\D3D10\" />
+    <Folder Include="Source\Graphics\Vulkan\" />
   </ItemGroup>
 </Project>
