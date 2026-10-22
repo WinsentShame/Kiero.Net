@@ -14,6 +14,7 @@ public static unsafe class ExecuteCommandListsHook
 
     private static volatile nint lastQueue;
     private static volatile nint lastQueueDevice;
+    private static nint heldQueue; 
 
     public static nint LastQueue => lastQueue;
     public static nint LastQueueDevice => lastQueueDevice;
@@ -47,14 +48,19 @@ public static unsafe class ExecuteCommandListsHook
                 int hr = getDevice(queue, &iidDev, &dev);
                 if (hr >= 0 && dev != 0)
                 {
-                    lastQueueDevice = dev;
+                    lastQueueDevice = dev;  
                     lastQueue = queue;
-                    Com.Release(dev);
+                    Com.Release(dev);      
+                    var addRef = (delegate* unmanaged[Stdcall]<nint, uint>)
+                        Vtbl.VTableM(queue, Vtbl.IUnknown_AddRef);
+                    addRef(queue);
+                    heldQueue = queue;
+
                     Logger.Info("ECLHook", $"captured direct queue=0x{queue:X} device=0x{dev:X}");
                 }
                 else
                 {
-                    Logger.Warn("ECLHook", $"captured queue=0x{queue:X} but GetDevice failed hr=0x{hr:X8}");
+                    Logger.Warn("ECLHook", $"queue=0x{queue:X} GetDevice failed hr=0x{hr:X8}");
                 }
             }
         }

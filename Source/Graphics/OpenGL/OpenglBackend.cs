@@ -1,72 +1,46 @@
 ﻿namespace Kiero.Net;
 
-internal sealed unsafe class OpenglBackend
+internal sealed unsafe class OpenglBackend : IBackend
 {
     private nint hdc;
     private nint hwnd;
-    private bool ready;
-    private long frameCounter;
 
-    public bool isReady => ready;
+    public bool isReady { get; private set; }
     public nint Hdc => hdc;
-    public nint Hwnd => hwnd;
 
-    public bool Init(nint hdc)
+    public bool Init(nint handle, int rtvFormat)
     {
-        this.hdc = hdc;
+        hdc = handle;
+        hwnd = Win32.WindowFromDC(hdc);
+        if (hwnd == 0) { Logger.Error("Gl", "WindowFromDC=0"); return false; }
+        if (!Win32.GetClientRect(hwnd, out Win32.RECT rc)) return false;
+        if (rc.Right - rc.Left < 64 || rc.Bottom - rc.Top < 64) return false;
 
-        nint w = Win32.WindowFromDC(hdc);
-        if (w == 0) { Logger.Error("Gl", "WindowFromDC returned 0"); return false; }
-        hwnd = w;
-
-        if (!Win32.GetClientRect(hwnd, out Win32.RECT rc))
-        {
-            Logger.Error("Gl", "GetClientRect failed");
-            return false;
-        }
-        int width = rc.Right - rc.Left;
-        int height = rc.Bottom - rc.Top;
-        if (width < 64 || height < 64)
-        {
-            Logger.Error("Gl", $"too small {width}x{height}");
-            return false;
-        }
-
-        Logger.Info("Gl", $"Init hdc=0x{hdc:X} hwnd=0x{hwnd:X} {width}x{height}");
-
-        if (ImGui.ImplOpenGL3Init(null) == 0)
-        {
-            Logger.Error("Gl", "ImplOpenGL3Init failed");
-            return false;
-        }
-
-        ready = true;
-        Logger.Info("Gl", "ready");
+        if (ImGui.ImplOpenGL3Init(null) == 0) { Logger.Error("Gl", "ImplOpenGL3Init failed"); return false; }
+        isReady = true;
         return true;
     }
 
     public void NewFrame() => ImGui.ImplOpenGL3NewFrame();
+    public void Render(nint drawData) { if (isReady && drawData != 0) ImGui.ImplOpenGL3RenderDrawData(drawData); }
+    public void OnResize() { }
+    public void OnReset() { }
+    public void OnResetPost() { }
 
-    public void RenderDrawData(nint drawData)
+    public bool TryGetSize(out float w, out float h)
     {
-        if (!ready || drawData == 0) return;
-
-        ImGui.ImplOpenGL3RenderDrawData(drawData);
-
-        long n = ++frameCounter;
-        if (n == 1 || n % 600 == 0)
-            Logger.Info("Gl", $"frame={n} hdc=0x{hdc:X}");
+        w = h = 0;
+        if (hwnd == 0) return false;
+        if (!Win32.GetClientRect(hwnd, out Win32.RECT rc)) return false;
+        w = rc.Right - rc.Left; h = rc.Bottom - rc.Top;
+        return w > 0 && h > 0;
     }
 
     public void Shutdown()
     {
-        if (!ready) return;
-        ready = false;
-
+        if (!isReady) return;
+        isReady = false;
         try { ImGui.ImplOpenGL3Shutdown(); } catch { }
-
-        hdc = 0;
-        hwnd = 0;
-        Logger.Info("Gl", "Shutdown complete");
+        hdc = hwnd = 0;
     }
 }

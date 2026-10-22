@@ -2,7 +2,7 @@
 
 namespace Kiero.Net;
 
-internal sealed unsafe class D3D11Backend
+internal sealed unsafe class D3D11Backend : IBackend
 {
     private const int MAX_BACKBUFFERS = 4;
 
@@ -14,29 +14,17 @@ internal sealed unsafe class D3D11Backend
     private nint[] rtvs = new nint[MAX_BACKBUFFERS];
     private nint[] rtvBackbuffers = new nint[MAX_BACKBUFFERS];
 
-    private bool ready;
-    private long frameCounter;
+    public bool isReady { get; private set; }
 
-    public bool isReady => ready;
-
-    public bool Init(nint sc)
+    public bool Init(nint handle, int rtvFormat)  
     {
-        swapChain = sc;
-        Logger.Info("Dx11", $"Init sc=0x{sc:X}");
+        swapChain = handle;
 
         nint sc3 = 0;
         Guid iid3 = Guids.IID_IDXGISwapChain3;
-        if (Com.QueryInterface(sc, &iid3, &sc3) >= 0 && sc3 != 0)
-        {
-            swapChain3 = sc3;
-            Logger.Info("Dx11", $"swapChain3=0x{sc3:X} (GetCurrentBackBufferIndex OK)");
-        }
-        else
-        {
-            Logger.Warn("Dx11", "IDXGISwapChain3 not available, will render to buffer 0 only");
-        }
+        if (Com.QueryInterface(swapChain, &iid3, &sc3) >= 0 && sc3 != 0) swapChain3 = sc3;
 
-        nint bb = Dxgi.GetBackBuffer(sc, 0, Guids.IID_ID3D11Texture2D);
+        nint bb = Dxgi.GetBackBuffer(swapChain, 0, Guids.IID_ID3D11Texture2D);
         if (bb == 0) { Logger.Error("Dx11", "backbuffer=0"); return false; }
 
         nint dev = 0;
@@ -46,29 +34,22 @@ internal sealed unsafe class D3D11Backend
         Com.Release(bb);
         if (hr < 0 || dev == 0) { Logger.Error("Dx11", $"GetDevice hr=0x{hr:X}"); return false; }
         device = dev;
-        Logger.Info("Dx11", $"device=0x{dev:X}");
 
         nint ctx = 0;
         var getCtx = (delegate* unmanaged[Stdcall]<nint, nint*, void>)
-            Vtbl.VTableM(dev, Vtbl.D3D11Device_GetImmediateContext);
-        getCtx(dev, &ctx);
+            Vtbl.VTableM(device, Vtbl.D3D11Device_GetImmediateContext);
+        getCtx(device, &ctx);
         if (ctx == 0) { Logger.Error("Dx11", "no context"); return false; }
         context = ctx;
-        Logger.Info("Dx11", $"context=0x{ctx:X}");
 
-        if (ImGui.ImplDX11Init(device, context) == 0)
-        {
-            Logger.Error("Dx11", "ImplDX11Init failed");
-            return false;
-        }
-
-        ready = true;
+        if (ImGui.ImplDX11Init(device, context) == 0) { Logger.Error("Dx11", "ImplDX11Init failed"); return false; }
+        isReady = true;
         return true;
     }
 
     public void NewFrame() => ImGui.ImplDX11NewFrame();
 
-    public void ReleaseRenderTarget()
+    public void OnResize()
     {
         for (int i = 0; i < MAX_BACKBUFFERS; i++)
         {
@@ -77,9 +58,12 @@ internal sealed unsafe class D3D11Backend
         }
     }
 
-    public void RenderDrawData(nint drawData)
+    public void OnReset() { }
+    public void OnResetPost() { }
+
+    public void Render(nint drawData)
     {
-        if (!ready || drawData == 0) return;
+        if (!isReady || drawData == 0) return;
 
         uint idx = 0;
         if (swapChain3 != 0)
@@ -91,39 +75,24 @@ internal sealed unsafe class D3D11Backend
         nint bb = Dxgi.GetBackBuffer(swapChain, idx, Guids.IID_ID3D11Texture2D);
         if (bb == 0) return;
 
-        nint oldRtv = 0;
-        nint oldDsv = 0;
-        bool haveOldTargets = false;
-
+        nint oldRtv = 0, oldDsv = 0;
         try
         {
             if (rtvs[idx] == 0 || rtvBackbuffers[idx] != bb)
             {
                 if (rtvs[idx] != 0) { Com.Release(rtvs[idx]); rtvs[idx] = 0; }
-
                 nint newRtv = 0;
                 var createRtv = (delegate* unmanaged[Stdcall]<nint, nint, nint, nint*, int>)
                     Vtbl.VTableM(device, Vtbl.D3D11Device_CreateRenderTargetView);
                 int hr = createRtv(device, bb, 0, &newRtv);
                 if (hr < 0 || newRtv == 0) return;
-
                 rtvs[idx] = newRtv;
                 rtvBackbuffers[idx] = bb;
-                Logger.Info("Dx11", $"RTV created for idx={idx} bb=0x{bb:X}");
             }
 
-            try
-            {
-                var omGet = (delegate* unmanaged[Stdcall]<nint, uint, nint*, nint*, void>)
-                    Vtbl.VTableM(context, Vtbl.D3D11Context_OMGetRenderTargets);
-                nint tmpRtv = 0;
-                nint tmpDsv = 0;
-                omGet(context, 1, &tmpRtv, &tmpDsv);
-                oldRtv = tmpRtv;
-                oldDsv = tmpDsv;
-                haveOldTargets = true;
-            }
-            catch { haveOldTargets = false; }
+            var omGet = (delegate* unmanaged[Stdcall]<nint, uint, nint*, nint*, void>)
+                Vtbl.VTableM(context, Vtbl.D3D11Context_OMGetRenderTargets);
+            omGet(context, 1, &oldRtv, &oldDsv);
 
             nint rtvHandle = rtvs[idx];
             var omSet = (delegate* unmanaged[Stdcall]<nint, uint, nint*, nint, void>)
@@ -132,22 +101,11 @@ internal sealed unsafe class D3D11Backend
 
             ImGui.ImplDX11RenderDrawData(drawData);
 
-            if (haveOldTargets)
+            if (oldRtv != 0 || oldDsv != 0)
             {
-                if (oldRtv != 0 || oldDsv != 0)
-                {
-                    nint restoreRtv = oldRtv;
-                    omSet(context, oldRtv != 0 ? 1u : 0u, &restoreRtv, oldDsv);
-                }
+                nint restore = oldRtv;
+                omSet(context, oldRtv != 0 ? 1u : 0u, &restore, oldDsv);
             }
-            else
-            {
-                omSet(context, 0, null, 0);
-            }
-
-            long N = ++frameCounter;
-            if (N == 1 || N % 600 == 0)
-                Logger.Info("Dx11", $"frame={N} idx={idx} bb=0x{bb:X} rtv=0x{rtvs[idx]:X}");
         }
         finally
         {
@@ -157,14 +115,18 @@ internal sealed unsafe class D3D11Backend
         }
     }
 
+    public bool TryGetSize(out float w, out float h)
+    {
+        if (!Dxgi.TryGetSize(swapChain, out uint ww, out uint hh)) { w = h = 0; return false; }
+        w = ww; h = hh; return true;
+    }
+
     public void Shutdown()
     {
-        ReleaseRenderTarget();
-        if (ready)
-        {
-            try { ImGui.ImplDX11Shutdown(); } catch { }
-            ready = false;
-        }
+        if (!isReady) return;
+        isReady = false;
+        OnResize();
+        try { ImGui.ImplDX11Shutdown(); } catch { }
         if (context != 0) { Com.Release(context); context = 0; }
         if (device != 0) { Com.Release(device); device = 0; }
         if (swapChain3 != 0) { Com.Release(swapChain3); swapChain3 = 0; }

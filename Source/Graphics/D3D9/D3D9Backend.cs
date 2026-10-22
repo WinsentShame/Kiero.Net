@@ -1,97 +1,61 @@
 ﻿namespace Kiero.Net;
 
-internal sealed unsafe class D3D9Backend
+internal sealed unsafe class D3D9Backend : IBackend
 {
     private nint device;
-    private bool ready;
     private long frameCounter;
 
-    public bool isReady => ready;
+    public bool isReady { get; private set; }
 
-    public bool Init(nint dev)
+    public bool Init(nint handle, int rtvFormat)
     {
-        device = dev;
-        Logger.Info("Dx9", $"Init dev=0x{dev:X}");
-
-        if (ImGui.ImplDX9Init(device) == 0)
-        {
-            Logger.Error("Dx9", "ImplDX9Init failed");
-            return false;
-        }
-
-        ready = true;
-        Logger.Info("Dx9", "ready");
+        device = handle;
+        Logger.Info("Dx9", $"Init dev=0x{device:X}");
+        if (ImGui.ImplDX9Init(device) == 0) { Logger.Error("Dx9", "ImplDX9Init failed"); return false; }
+        isReady = true;
         return true;
     }
 
     public void NewFrame() => ImGui.ImplDX9NewFrame();
+    public void Render(nint drawData) { if (isReady && drawData != 0) ImGui.ImplDX9RenderDrawData(drawData); }
+    public void OnResize() { }
+    public void OnReset() { if (isReady) try { ImGui.ImplDX9InvalidateDeviceObjects(); } catch { } }
+    public void OnResetPost() { if (isReady) try { ImGui.ImplDX9CreateDeviceObjects(); } catch { } }
 
-    public void RenderDrawData(nint drawData)
-    {
-        if (!ready || drawData == 0) return;
-        ImGui.ImplDX9RenderDrawData(drawData);
-
-        long n = ++frameCounter;
-        if (n == 1 || n % 600 == 0)
-            Logger.Info("Dx9", $"frame={n}");
-    }
-
-    public bool GetSize(out int w, out int h)
+    public bool TryGetSize(out float w, out float h)
     {
         w = h = 0;
         if (device == 0) return false;
 
         var getViewport = (delegate* unmanaged[Stdcall]<nint, void*, int>)
             Vtbl.VTableM(device, Vtbl.Direct3DDevice9_GetViewport);
-
         byte* vp = stackalloc byte[24];
         if (getViewport(device, vp) >= 0)
         {
-            w = *(int*)(vp + 8);
-            h = *(int*)(vp + 12);
-            if (w > 0 && h > 0) return true;
+            int ww = *(int*)(vp + 8), hh = *(int*)(vp + 12);
+            if (ww > 0 && hh > 0) { w = ww; h = hh; return true; }
         }
 
         var getCreationParams = (delegate* unmanaged[Stdcall]<nint, void*, int>)
             Vtbl.VTableM(device, Vtbl.Direct3DDevice9_GetCreationParameters);
-
         byte* cp = stackalloc byte[24];
         if (getCreationParams(device, cp) >= 0)
         {
             nint hwnd = *(nint*)(cp + 8);
             if (hwnd != 0 && Win32.GetClientRect(hwnd, out Win32.RECT rc))
             {
-                w = rc.Right - rc.Left;
-                h = rc.Bottom - rc.Top;
+                w = rc.Right - rc.Left; h = rc.Bottom - rc.Top;
                 return w > 0 && h > 0;
             }
         }
-
         return false;
-    }
-
-    public void OnReset()
-    {
-        if (!ready) return;
-        Logger.Info("Dx9", "Reset -> invalidate");
-        try { ImGui.ImplDX9InvalidateDeviceObjects(); } catch { }
-    }
-
-    public void OnResetPost()
-    {
-        if (!ready) return;
-        Logger.Info("Dx9", "Reset -> recreate");
-        try { ImGui.ImplDX9CreateDeviceObjects(); } catch { }
     }
 
     public void Shutdown()
     {
-        if (!ready) return;
-        ready = false;
-
+        if (!isReady) return;
+        isReady = false;
         try { ImGui.ImplDX9Shutdown(); } catch { }
-
         device = 0;
-        Logger.Info("Dx9", "Shutdown complete");
     }
 }

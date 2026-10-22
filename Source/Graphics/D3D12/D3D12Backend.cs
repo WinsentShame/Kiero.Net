@@ -2,7 +2,7 @@
 
 namespace Kiero.Net;
 
-internal sealed unsafe class D3D12Backend
+internal sealed unsafe class D3D12Backend : IBackend
 {
     private const int FRAMES_IN_FLIGHT = 2;
     private const int SRV_HEAP_SIZE = 256;
@@ -25,25 +25,20 @@ internal sealed unsafe class D3D12Backend
 
     private int rtvHeapSize;
 
-    private bool ready;
-
     private int frameIndex;
     private ulong fenceCounter;
     private long frameCounter;
 
-    public bool isReady => ready;
+    public bool isReady { get; private set; }
 
-    public bool Init(nint sc, int rtvFormat)
+    public bool Init(nint handle, int rtvFormat)
     {
-        swapChain = sc;
-        Logger.Info("Dx12", $"Init sc=0x{sc:X} rtvFormat={rtvFormat}");
+        swapChain = handle;
+        Logger.Info("Dx12", $"Init sc=0x{swapChain:X} rtvFormat={rtvFormat}");
 
-        var getDevice = (delegate* unmanaged[Stdcall]<nint, Guid*, nint*, int>)
-            Vtbl.VTableM(sc, Vtbl.SwapChain_GetDevice);
         Guid iidDev = Guids.IID_ID3D12Device;
-        nint dev = 0;
-        int hr = getDevice(sc, &iidDev, &dev);
-        if (hr < 0 || dev == 0) { Logger.Error("Dx12", $"GetDevice hr=0x{hr:X8}"); return false; }
+        nint dev = Vtbl.SwapChainGetDevice(swapChain, &iidDev);
+        if (dev == 0) { Logger.Error("Dx12", "GetDevice failed"); return false; }
         device = dev;
         Logger.Info("Dx12", $"device=0x{dev:X}");
 
@@ -68,8 +63,8 @@ internal sealed unsafe class D3D12Backend
         {
             byte* desc = stackalloc byte[128];
             var getDesc = (delegate* unmanaged[Stdcall]<nint, void*, int>)
-                Vtbl.VTableM(sc, Vtbl.SwapChain_GetDesc);
-            if (getDesc(sc, desc) >= 0)
+                Vtbl.VTableM(swapChain, Vtbl.SwapChain_GetDesc);
+            if (getDesc(swapChain, desc) >= 0)
             {
                 uint bc = *(uint*)(desc + 40);
                 if (bc >= 1 && bc <= 8) bufferCount = (int)bc;
@@ -93,7 +88,7 @@ internal sealed unsafe class D3D12Backend
         };
 
         nint rtvH = 0;
-        hr = createHeap(device, &rtvDesc, &iidHeap, &rtvH);
+        int hr = createHeap(device, &rtvDesc, &iidHeap, &rtvH);
         if (hr < 0 || rtvH == 0) { Logger.Error("Dx12", $"CreateRtvHeap hr=0x{hr:X8}"); return false; }
         rtvHeap = rtvH;
         Logger.Info("Dx12", $"rtvHeap=0x{rtvH:X}");
@@ -161,22 +156,33 @@ internal sealed unsafe class D3D12Backend
         }
         Logger.Info("Dx12", "ImplDX12Init ok");
 
-        ready = true;
+        isReady = true;
         Logger.Info("Dx12", "ready");
         return true;
     }
 
     public void NewFrame() => ImGui.ImplDX12NewFrame();
 
-    public void OnResizeBuffers()
+    public void OnResize()
     {
         if (cachedBackbuffers != null) Array.Clear(cachedBackbuffers);
-        Logger.Info("Dx12", "RTV cache cleared (ResizeBuffers)");
+        Logger.Info("Dx12", "RTV cache cleared (OnResize)");
     }
 
-    public void RenderDrawData(nint drawData)
+    public void OnReset() { }
+    public void OnResetPost() { }
+
+    public bool TryGetSize(out float w, out float h)
     {
-        if (!ready || drawData == 0) return;
+        if (!Dxgi.TryGetSize(swapChain, out uint ww, out uint hh)) { w = h = 0; return false; }
+        w = ww;
+        h = hh;
+        return true;
+    }
+
+    public void Render(nint drawData)
+    {
+        if (!isReady || drawData == 0) return;
 
         int fi = frameIndex;
 
@@ -189,14 +195,14 @@ internal sealed unsafe class D3D12Backend
                 if (++spins > 10_000_000)
                 {
                     Logger.Error("Dx12", "Fence wait timeout — GPU hung?");
-                    ready = false;
+                    isReady = false;
                     return;
                 }
             }
         }
 
         var allocReset = (delegate* unmanaged[Stdcall]<nint, int>)
-            Vtbl.VTableM(allocators[fi], 8);  
+            Vtbl.VTableM(allocators[fi], Vtbl.D3D12Allocator_Reset);
         allocReset(allocators[fi]);
 
         nint cmdList = lists[fi];
@@ -218,7 +224,10 @@ internal sealed unsafe class D3D12Backend
 
             try
             {
-                var rtvHandle = new D3D12Structs.D3D12_CPU_DESCRIPTOR_HANDLE { ptr = rtvHeapCpuStart + (nuint)(idx * rtvSize) };
+                var rtvHandle = new D3D12Structs.D3D12_CPU_DESCRIPTOR_HANDLE
+                {
+                    ptr = rtvHeapCpuStart + (nuint)(idx * rtvSize)
+                };
 
                 if (cachedBackbuffers[idx] != backbuffer)
                 {
@@ -294,8 +303,18 @@ internal sealed unsafe class D3D12Backend
 
     public void Shutdown()
     {
-        if (!ready) return;
-        ready = false;
+        if (!isReady) return;
+        isReady = false;
+
+        if (fence != 0 && fenceValues[0] > 0)
+        {
+            int spins = 0;
+            while (D3D12Shim.FenceGetCompletedValue(fence) < fenceCounter)
+            {
+                System.Threading.Thread.Yield();
+                if (++spins > 2_000_000) { Logger.Warn("Dx12", "Shutdown fence wait timeout"); break; }
+            }
+        }
 
         try { ImGui.ImplDX12Shutdown(); } catch { }
 
@@ -312,6 +331,13 @@ internal sealed unsafe class D3D12Backend
 
         queue = 0;
         swapChain = 0;
+        rtvHeapCpuStart = 0;
+        rtvSize = 0;
+        rtvHeapSize = 0;
+        cachedBackbuffers = null;
+        frameIndex = 0;
+        fenceCounter = 0;
+        frameCounter = 0;
 
         Logger.Info("Dx12", "Shutdown complete");
     }

@@ -25,7 +25,7 @@ public static unsafe class SwapBuffersHook
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvStdcall) })]
     private static int Detour(nint hdc)
     {
-        try { Overlay.OnPresent(hdc, 0, true); }
+        try { Overlay.OnPresent(hdc, 0, PresentSource.Gl); }
         catch (System.Exception ex) { Logger.Error("SwapBuffers", ex); }
 
         return ((delegate* unmanaged[Stdcall]<nint, int>)original)(hdc);

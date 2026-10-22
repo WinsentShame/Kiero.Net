@@ -11,16 +11,6 @@ public static unsafe class Vtbl
         return *(nint*)(vt + index * IntPtr.Size);
     }
 
-    /// <summary>Returns the method at <paramref name="index"/> cast to the unmanaged type T (typically a function pointer).</summary>
-    public static T VTableM<T>(nint com, int index) where T : unmanaged
-    {
-        nint vt = *(nint*)com;
-        nint addr = *(nint*)(vt + index * IntPtr.Size);
-        T result = default;
-        *(nint*)&result = addr;
-        return result;
-    }
-
     /// <summary>
     /// QueryInterface from an IDXGISwapChain to get its device for the given IID.
     /// Returns 0 if the swapchain is not backed by a device of that type.
@@ -98,9 +88,9 @@ public static unsafe class Vtbl
     // IDXGISwapChain3 (dxgi1_4.h)
     // ============================================================
     public const int SwapChain3_GetCurrentBackBufferIndex = 36;
-    public const int SwapChain3_ResizeBuffers1 = 37;
+    public const int SwapChain3_CheckColorSpaceSupport = 37;
     public const int SwapChain3_SetColorSpace1 = 38;
-    public const int SwapChain3_CheckColorSpaceSupport = 39;
+    public const int SwapChain3_ResizeBuffers1 = 39;
 
     // ============================================================
     // IDXGISwapChain4 (dxgi1_5.h)
@@ -483,6 +473,7 @@ public static unsafe class Vtbl
     public const int D3D12Object_SetPrivateData = 4;
     public const int D3D12Object_SetPrivateDataInterface = 5;
     public const int D3D12Object_SetName = 6;
+    public const int D3D12Allocator_Reset = 8;
 
     // ============================================================
     // ID3D12DeviceChild (d3d12.h)
@@ -585,13 +576,16 @@ public static unsafe class Vtbl
     public const int D3D12List_IASetVertexBuffers = 44;
     public const int D3D12List_SOSetTargets = 45;
     public const int D3D12List_OMSetRenderTargets = 46;
-    public const int D3D12List_CommitBundle = 47;
-    public const int D3D12List_SetViewports = 48;
-    public const int D3D12List_SetScissorRects = 49;
-    public const int D3D12List_SetBlendFactor = 50;
-    public const int D3D12List_SetStencilRef = 51;
-    public const int D3D12List_SetPipelineState1 = 52;
-    public const int D3D12List_DispatchRays = 53;
+    public const int D3D12List_ClearDepthStencilView = 47;
+    public const int D3D12List_ClearRenderTargetView = 48;
+    public const int D3D12List_ClearUnorderedAccessViewUint = 49;
+    public const int D3D12List_ClearUnorderedAccessViewFloat = 50;
+    public const int D3D12List_DiscardResource = 51;
+    public const int D3D12List_BeginQuery = 52;
+    public const int D3D12List_EndQuery = 53;
+    public const int D3D12List_ResolveQueryData = 54;
+    public const int D3D12List_SetPredication = 55;
+    public const int D3D12List_ExecuteIndirect = 56;
 
     // ============================================================
     // IDirect3D9 (d3d9.h) — inherits IUnknown
