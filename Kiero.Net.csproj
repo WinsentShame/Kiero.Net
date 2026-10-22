@@ -1,16 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <LangVersion>latest</LangVersion>
-    <Nullable>disable</Nullable>
-    <OutputType>Library</OutputType>
-    <AssemblyName>Kiero.Net</AssemblyName>
-    <RootNamespace>Kiero.Net</RootNamespace>
-  </PropertyGroup>
-  <ItemGroup>
-    <Compile Remove="Source\Graphics\Vulkan\**" />
-    <EmbeddedResource Remove="Source\Graphics\Vulkan\**" />
-    <None Remove="Source\Graphics\Vulkan\**" />
-  </ItemGroup>
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<LangVersion>latest</LangVersion>
+		<Nullable>disable</Nullable>
+		<OutputType>Library</OutputType>
+		<AssemblyName>Kiero.Net</AssemblyName>
+		<RootNamespace>Kiero.Net</RootNamespace>
+
+		<Version>0.0.1</Version>
+		<Authors>WinsentShame</Authors>
+		<Copyright>Copyright (c) 2026 WinsentShame</Copyright>
+		<Description>C# library for injecting a Dear ImGui overlay into a game process.
+		Supports D3D9, D3D10, D3D11, D3D12 and OpenGL 3.
+		</Description>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	</PropertyGroup>
 </Project>
