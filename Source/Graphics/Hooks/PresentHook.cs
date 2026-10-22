@@ -13,9 +13,9 @@ public static unsafe class PresentHook
     private static long present1Calls;
     private static long presentCallsDx9;
 
-    public static long presentCallCount => Interlocked.Read(ref presentCalls);
-    public static long present1CallCount => Interlocked.Read(ref present1Calls);
-    public static long presentCallCountDx9 => Interlocked.Read(ref presentCallsDx9);
+    //public static long presentCallCount => Interlocked.Read(ref presentCalls);
+    //public static long present1CallCount => Interlocked.Read(ref present1Calls);
+    //public static long presentCallCountDx9 => Interlocked.Read(ref presentCallsDx9);
 
     public static bool Install(nint addr)
     {

@@ -4,6 +4,9 @@ namespace Kiero.Net;
 
 public static class Guids
 {
+    public static readonly Guid IID_ID3D10Device = new("9b7e4c0f-342c-4106-a19f-4f2704f689f0");
+    public static readonly Guid IID_ID3D10Texture2D = new("9b7e4c04-342c-4106-a19f-4f2704f689f0");
+    public static readonly Guid IID_ID3D10RenderTargetView = new("9b7e4c08-342c-4106-a19f-4f2704f689f0");
     public static readonly Guid IID_ID3D11Device = new("db6f6ddb-ac77-4e88-8253-819df9bbf140");
     public static readonly Guid IID_ID3D11Texture2D = new("6f15aaf2-d208-4e89-9ab4-489535d34f9c");
     public static readonly Guid IID_IDXGISwapChain1 = new("790a45f7-0d42-4876-983a-0a55cfe6f4aa");

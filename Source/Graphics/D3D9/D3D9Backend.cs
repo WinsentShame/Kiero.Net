@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Kiero.Net;
+﻿namespace Kiero.Net;
 
 internal sealed unsafe class D3D9Backend
 {
@@ -43,10 +41,8 @@ internal sealed unsafe class D3D9Backend
         w = h = 0;
         if (device == 0) return false;
 
-        nint vt = *(nint*)device;
-
         var getViewport = (delegate* unmanaged[Stdcall]<nint, void*, int>)
-            (*(nint*)(vt + 48 * IntPtr.Size));
+            Vtbl.VTableM(device, Vtbl.Direct3DDevice9_GetViewport);
 
         byte* vp = stackalloc byte[24];
         if (getViewport(device, vp) >= 0)
@@ -57,12 +53,12 @@ internal sealed unsafe class D3D9Backend
         }
 
         var getCreationParams = (delegate* unmanaged[Stdcall]<nint, void*, int>)
-            (*(nint*)(vt + 9 * IntPtr.Size));
+            Vtbl.VTableM(device, Vtbl.Direct3DDevice9_GetCreationParameters);
 
-        byte* cp = stackalloc byte[24]; 
+        byte* cp = stackalloc byte[24];
         if (getCreationParams(device, cp) >= 0)
         {
-            nint hwnd = *(nint*)(cp + 8); 
+            nint hwnd = *(nint*)(cp + 8);
             if (hwnd != 0 && Win32.GetClientRect(hwnd, out Win32.RECT rc))
             {
                 w = rc.Right - rc.Left;

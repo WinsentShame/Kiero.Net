@@ -7,22 +7,6 @@ internal sealed unsafe class D3D12Backend
     private const int FRAMES_IN_FLIGHT = 2;
     private const int SRV_HEAP_SIZE = 256;
 
-    private const int VT_DEV_CREATE_ALLOC = 9;
-    private const int VT_DEV_CREATE_LIST = 12;
-    private const int VT_DEV_CREATE_HEAP = 14;
-    private const int VT_DEV_GET_INC = 15;
-    private const int VT_DEV_CREATE_RTV = 20;
-    private const int VT_DEV_CREATE_FENCE = 36;
-
-    private const int VT_QUEUE_EXEC = 10;
-    private const int VT_QUEUE_SIGNAL = 14;
-
-    private const int VT_LIST_CLOSE = 9;
-    private const int VT_LIST_RESET = 10;
-    private const int VT_LIST_BARRIER = 26;
-    private const int VT_LIST_SET_DESCRIPTOR_HEAPS = 28;
-    private const int VT_LIST_OMSETRT = 46;
-
     private nint swapChain;
     private nint device;
     private nint queue;
@@ -54,8 +38,8 @@ internal sealed unsafe class D3D12Backend
         swapChain = sc;
         Logger.Info("Dx12", $"Init sc=0x{sc:X} rtvFormat={rtvFormat}");
 
-        nint vtSc = *(nint*)sc;
-        var getDevice = (delegate* unmanaged[Stdcall]<nint, Guid*, nint*, int>)(*(nint*)(vtSc + 7 * IntPtr.Size));
+        var getDevice = (delegate* unmanaged[Stdcall]<nint, Guid*, nint*, int>)
+            Vtbl.VTableM(sc, Vtbl.SwapChain_GetDevice);
         Guid iidDev = Guids.IID_ID3D12Device;
         nint dev = 0;
         int hr = getDevice(sc, &iidDev, &dev);
@@ -83,10 +67,11 @@ internal sealed unsafe class D3D12Backend
         try
         {
             byte* desc = stackalloc byte[128];
-            var getDesc = (delegate* unmanaged[Stdcall]<nint, void*, int>)(*(nint*)(vtSc + 12 * IntPtr.Size));
+            var getDesc = (delegate* unmanaged[Stdcall]<nint, void*, int>)
+                Vtbl.VTableM(sc, Vtbl.SwapChain_GetDesc);
             if (getDesc(sc, desc) >= 0)
             {
-                uint bc = *(uint*)(desc + 44);
+                uint bc = *(uint*)(desc + 40);
                 if (bc >= 1 && bc <= 8) bufferCount = (int)bc;
             }
         }
@@ -95,9 +80,9 @@ internal sealed unsafe class D3D12Backend
         cachedBackbuffers = new nint[rtvHeapSize];
         Logger.Info("Dx12", $"bufferCount={rtvHeapSize}");
 
-        nint vtDev = *(nint*)device;
         Guid iidHeap = Guids.IID_ID3D12DescriptorHeap;
-        var createHeap = (delegate* unmanaged[Stdcall]<nint, D3D12Structs.D3D12_DESCRIPTOR_HEAP_DESC*, Guid*, nint*, int>)(*(nint*)(vtDev + VT_DEV_CREATE_HEAP * IntPtr.Size));
+        var createHeap = (delegate* unmanaged[Stdcall]<nint, D3D12Structs.D3D12_DESCRIPTOR_HEAP_DESC*, Guid*, nint*, int>)
+            Vtbl.VTableM(device, Vtbl.D3D12Device_CreateDescriptorHeap);
 
         var rtvDesc = new D3D12Structs.D3D12_DESCRIPTOR_HEAP_DESC
         {
@@ -113,7 +98,8 @@ internal sealed unsafe class D3D12Backend
         rtvHeap = rtvH;
         Logger.Info("Dx12", $"rtvHeap=0x{rtvH:X}");
 
-        var getInc = (delegate* unmanaged[Stdcall]<nint, int, uint>)(*(nint*)(vtDev + VT_DEV_GET_INC * IntPtr.Size));
+        var getInc = (delegate* unmanaged[Stdcall]<nint, int, uint>)
+            Vtbl.VTableM(device, Vtbl.D3D12Device_GetDescriptorHandleIncrementSize);
         rtvSize = getInc(device, D3D12Structs.HEAP_TYPE_RTV);
         Logger.Info("Dx12", $"rtvSize={rtvSize}");
 
@@ -136,8 +122,10 @@ internal sealed unsafe class D3D12Backend
 
         Guid iidAlloc = Guids.IID_ID3D12CommandAllocator;
         Guid iidList = Guids.IID_ID3D12GraphicsCommandList;
-        var createAlloc = (delegate* unmanaged[Stdcall]<nint, int, Guid*, nint*, int>)(*(nint*)(vtDev + VT_DEV_CREATE_ALLOC * IntPtr.Size));
-        var createList = (delegate* unmanaged[Stdcall]<nint, int, int, nint, nint, Guid*, nint*, int>)(*(nint*)(vtDev + VT_DEV_CREATE_LIST * IntPtr.Size));
+        var createAlloc = (delegate* unmanaged[Stdcall]<nint, int, Guid*, nint*, int>)
+            Vtbl.VTableM(device, Vtbl.D3D12Device_CreateCommandAllocator);
+        var createList = (delegate* unmanaged[Stdcall]<nint, int, int, nint, nint, Guid*, nint*, int>)
+            Vtbl.VTableM(device, Vtbl.D3D12Device_CreateCommandList);
 
         for (int i = 0; i < FRAMES_IN_FLIGHT; i++)
         {
@@ -151,14 +139,15 @@ internal sealed unsafe class D3D12Backend
             if (hr < 0 || list == 0) { Logger.Error("Dx12", $"CreateList[{i}] hr=0x{hr:X8}"); return false; }
             lists[i] = list;
 
-            nint vtList = *(nint*)list;
-            var close = (delegate* unmanaged[Stdcall]<nint, int>)(*(nint*)(vtList + VT_LIST_CLOSE * IntPtr.Size));
+            var close = (delegate* unmanaged[Stdcall]<nint, int>)
+                Vtbl.VTableM(list, Vtbl.D3D12List_Close);
             close(list);
             Logger.Info("Dx12", $"alloc[{i}]=0x{alloc:X} list[{i}]=0x{list:X}");
         }
 
         Guid iidFence = Guids.IID_ID3D12Fence;
-        var createFence = (delegate* unmanaged[Stdcall]<nint, ulong, int, Guid*, nint*, int>)(*(nint*)(vtDev + VT_DEV_CREATE_FENCE * IntPtr.Size));
+        var createFence = (delegate* unmanaged[Stdcall]<nint, ulong, int, Guid*, nint*, int>)
+            Vtbl.VTableM(device, Vtbl.D3D12Device_CreateFence);
         nint f = 0;
         hr = createFence(device, 0, 0, &iidFence, &f);
         if (hr < 0 || f == 0) { Logger.Error("Dx12", $"CreateFence hr=0x{hr:X8}"); return false; }
@@ -200,22 +189,23 @@ internal sealed unsafe class D3D12Backend
                 if (++spins > 10_000_000)
                 {
                     Logger.Error("Dx12", "Fence wait timeout — GPU hung?");
-                    ready = false; 
+                    ready = false;
                     return;
                 }
             }
         }
 
-        nint vtAlloc = *(nint*)allocators[fi];
-        var allocReset = (delegate* unmanaged[Stdcall]<nint, int>)(*(nint*)(vtAlloc + 8 * IntPtr.Size));
+        var allocReset = (delegate* unmanaged[Stdcall]<nint, int>)
+            Vtbl.VTableM(allocators[fi], 8);  
         allocReset(allocators[fi]);
 
         nint cmdList = lists[fi];
-        nint vtList = *(nint*)cmdList;
-        var listReset = (delegate* unmanaged[Stdcall]<nint, nint, nint, int>)(*(nint*)(vtList + VT_LIST_RESET * IntPtr.Size));
+        var listReset = (delegate* unmanaged[Stdcall]<nint, nint, nint, int>)
+            Vtbl.VTableM(cmdList, Vtbl.D3D12List_Reset);
         listReset(cmdList, allocators[fi], 0);
 
-        var close = (delegate* unmanaged[Stdcall]<nint, int>)(*(nint*)(vtList + VT_LIST_CLOSE * IntPtr.Size));
+        var close = (delegate* unmanaged[Stdcall]<nint, int>)
+            Vtbl.VTableM(cmdList, Vtbl.D3D12List_Close);
         bool closed = false;
 
         try
@@ -232,8 +222,8 @@ internal sealed unsafe class D3D12Backend
 
                 if (cachedBackbuffers[idx] != backbuffer)
                 {
-                    nint vtDev = *(nint*)device;
-                    var createRtv = (delegate* unmanaged[Stdcall]<nint, nint, nint, D3D12Structs.D3D12_CPU_DESCRIPTOR_HANDLE, void>)(*(nint*)(vtDev + VT_DEV_CREATE_RTV * IntPtr.Size));
+                    var createRtv = (delegate* unmanaged[Stdcall]<nint, nint, nint, D3D12Structs.D3D12_CPU_DESCRIPTOR_HANDLE, void>)
+                        Vtbl.VTableM(device, Vtbl.D3D12Device_CreateRenderTargetView);
                     createRtv(device, backbuffer, 0, rtvHandle);
                     cachedBackbuffers[idx] = backbuffer;
                     Logger.Info("Dx12", $"RTV created for idx={idx} bb=0x{backbuffer:X}");
@@ -248,14 +238,17 @@ internal sealed unsafe class D3D12Backend
                     StateBefore = D3D12Structs.STATE_PRESENT,
                     StateAfter = D3D12Structs.STATE_RENDER_TARGET,
                 };
-                var resBarrier = (delegate* unmanaged[Stdcall]<nint, uint, D3D12Structs.D3D12_RESOURCE_BARRIER*, void>)(*(nint*)(vtList + VT_LIST_BARRIER * IntPtr.Size));
+                var resBarrier = (delegate* unmanaged[Stdcall]<nint, uint, D3D12Structs.D3D12_RESOURCE_BARRIER*, void>)
+                    Vtbl.VTableM(cmdList, Vtbl.D3D12List_ResourceBarrier);
                 resBarrier(cmdList, 1, &barrier);
 
-                var omSet = (delegate* unmanaged[Stdcall]<nint, uint, D3D12Structs.D3D12_CPU_DESCRIPTOR_HANDLE*, int, nint, void>)(*(nint*)(vtList + VT_LIST_OMSETRT * IntPtr.Size));
+                var omSet = (delegate* unmanaged[Stdcall]<nint, uint, D3D12Structs.D3D12_CPU_DESCRIPTOR_HANDLE*, int, nint, void>)
+                    Vtbl.VTableM(cmdList, Vtbl.D3D12List_OMSetRenderTargets);
                 D3D12Structs.D3D12_CPU_DESCRIPTOR_HANDLE h = rtvHandle;
                 omSet(cmdList, 1, &h, 0, 0);
 
-                var setHeaps = (delegate* unmanaged[Stdcall]<nint, uint, nint*, void>)(*(nint*)(vtList + VT_LIST_SET_DESCRIPTOR_HEAPS * IntPtr.Size));
+                var setHeaps = (delegate* unmanaged[Stdcall]<nint, uint, nint*, void>)
+                    Vtbl.VTableM(cmdList, Vtbl.D3D12List_SetDescriptorHeaps);
                 nint srvHeapLocal = srvHeap;
                 setHeaps(cmdList, 1, &srvHeapLocal);
 
@@ -268,13 +261,14 @@ internal sealed unsafe class D3D12Backend
                 close(cmdList);
                 closed = true;
 
-                nint vtQueue = *(nint*)queue;
-                var exec = (delegate* unmanaged[Stdcall]<nint, uint, nint*, void>)(*(nint*)(vtQueue + VT_QUEUE_EXEC * IntPtr.Size));
+                var exec = (delegate* unmanaged[Stdcall]<nint, uint, nint*, void>)
+                    Vtbl.VTableM(queue, Vtbl.D3D12Queue_ExecuteCommandLists);
                 nint cl = cmdList;
                 exec(queue, 1, &cl);
 
                 ulong signalValue = ++fenceCounter;
-                var signal = (delegate* unmanaged[Stdcall]<nint, nint, ulong, int>)(*(nint*)(vtQueue + VT_QUEUE_SIGNAL * IntPtr.Size));
+                var signal = (delegate* unmanaged[Stdcall]<nint, nint, ulong, int>)
+                    Vtbl.VTableM(queue, Vtbl.D3D12Queue_Signal);
                 signal(queue, fence, signalValue);
                 fenceValues[fi] = signalValue;
 

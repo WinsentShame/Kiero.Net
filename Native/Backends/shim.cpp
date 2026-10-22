@@ -806,6 +806,38 @@
 	void shim_ImplDX9_InvalidateDeviceObjects() { ImGui_ImplDX9_InvalidateDeviceObjects(); }
 
 	// ============================================================
+	// DX10 BACKEND
+	// ============================================================
+	bool shim_ImplDX10_Init(ID3D10Device* device) { return ImGui_ImplDX10_Init(device); }
+	void shim_ImplDX10_Shutdown() { ImGui_ImplDX10_Shutdown(); }
+	void shim_ImplDX10_NewFrame() { ImGui_ImplDX10_NewFrame(); }
+	void shim_ImplDX10_RenderDrawData(ImDrawData* draw_data) { ImGui_ImplDX10_RenderDrawData(draw_data); }
+	bool shim_ImplDX10_CreateDeviceObjects() { return ImGui_ImplDX10_CreateDeviceObjects(); }
+	void shim_ImplDX10_InvalidateDeviceObjects() { ImGui_ImplDX10_InvalidateDeviceObjects(); }
+
+	void shim_D3D10_CreateRenderTargetView(ID3D10Device* dev, ID3D10Resource* res,
+		void* desc, void** out_rtv)
+	{
+		*out_rtv = nullptr;
+		dev->CreateRenderTargetView(res, (const D3D10_RENDER_TARGET_VIEW_DESC*)desc,
+			(ID3D10RenderTargetView**)out_rtv);
+	}
+
+	void shim_D3D10_OMSetRenderTargets(ID3D10Device* dev, unsigned int num_views,
+		ID3D10RenderTargetView* const* rtvs,
+		ID3D10DepthStencilView* dsv)
+	{
+		dev->OMSetRenderTargets(num_views, rtvs, dsv);
+	}
+
+	void shim_D3D10_OMGetRenderTargets(ID3D10Device* dev, unsigned int num_views,
+		ID3D10RenderTargetView** rtvs,
+		ID3D10DepthStencilView** dsv)
+	{
+		dev->OMGetRenderTargets(num_views, rtvs, dsv);
+	}
+
+	// ============================================================
 	// DX11 BACKEND
 	// ============================================================
 	bool shim_ImplDX11_Init(ID3D11Device* dev, ID3D11DeviceContext* ctx) { return ImGui_ImplDX11_Init(dev, ctx); }

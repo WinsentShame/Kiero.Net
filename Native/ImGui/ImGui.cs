@@ -1313,6 +1313,19 @@ public static unsafe class ImGui
     [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImplOpenGL3_RenderDrawData")]
     public static extern void ImplOpenGL3RenderDrawData(nint drawData);
 
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImplDX10_Init")]
+    public static extern byte ImplDX10Init(nint device);
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImplDX10_Shutdown")]
+    public static extern void ImplDX10Shutdown();
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImplDX10_NewFrame")]
+    public static extern void ImplDX10NewFrame();
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImplDX10_RenderDrawData")]
+    public static extern void ImplDX10RenderDrawData(nint drawData);
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImplDX10_CreateDeviceObjects")]
+    public static extern byte ImplDX10CreateDeviceObjects();
+    [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImplDX10_InvalidateDeviceObjects")]
+    public static extern void ImplDX10InvalidateDeviceObjects();
+
     [DllImport(Shim, CallingConvention = CallingConvention.Cdecl, EntryPoint = "shim_ImplDX9_Init")]
     public static extern byte ImplDX9Init(nint device);
 

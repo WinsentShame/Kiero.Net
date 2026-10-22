@@ -633,6 +633,16 @@ extern "C" {
 	void shim_ImplDX9_InvalidateDeviceObjects();
 
 	// ============================================================
+	// DX10 BACKEND
+	// ============================================================
+	bool shim_ImplDX10_Init(ID3D10Device* device);
+	void shim_ImplDX10_Shutdown();
+	void shim_ImplDX10_NewFrame();
+	void shim_ImplDX10_RenderDrawData(ImDrawData* draw_data);
+	bool shim_ImplDX10_CreateDeviceObjects();
+	void shim_ImplDX10_InvalidateDeviceObjects();
+
+	// ============================================================
 	// DX11 BACKEND
 	// ============================================================
 	bool shim_ImplDX11_Init(ID3D11Device* dev, ID3D11DeviceContext* ctx);
@@ -683,6 +693,18 @@ extern "C" {
 	unsigned long long shim_D3D12_FenceGetCompletedValue(void* fence);
 	void shim_D3D12_SetDescriptorHeaps(void* cmdList, unsigned int numHeaps, void** heaps);\
 	int shim_D3D12_CommandQueueGetType(void* queue);
+
+	// ============================================================
+	// D3D10 HELPERS (ABI-safe wrappers for C#)
+	// ============================================================
+	void shim_D3D10_CreateRenderTargetView(ID3D10Device* dev, ID3D10Resource* res,
+		void* desc, void** out_rtv);
+	void shim_D3D10_OMSetRenderTargets(ID3D10Device* dev, unsigned int num_views,
+		ID3D10RenderTargetView* const* rtvs,
+		ID3D10DepthStencilView* dsv);
+	void shim_D3D10_OMGetRenderTargets(ID3D10Device* dev, unsigned int num_views,
+		ID3D10RenderTargetView** rtvs,
+		ID3D10DepthStencilView** dsv);
 
 	// ============================================================
 	// WIN32 BACKEND

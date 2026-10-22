@@ -8,7 +8,6 @@ namespace Kiero.Net;
 public static unsafe class ExecuteCommandListsHook
 {
     private const int COMMAND_LIST_TYPE_DIRECT = 0;
-    private const int VT_CHILD_GET_DEVICE = 7; 
 
     private static nint original;
     private static int installed;
@@ -41,9 +40,8 @@ public static unsafe class ExecuteCommandListsHook
             int type = D3D12Shim.QueueGetType(queue);
             if (type == COMMAND_LIST_TYPE_DIRECT)
             {
-                nint vtQueue = *(nint*)queue;
                 var getDevice = (delegate* unmanaged[Stdcall]<nint, Guid*, nint*, int>)
-                    (*(nint*)(vtQueue + VT_CHILD_GET_DEVICE * IntPtr.Size));
+                    Vtbl.VTableM(queue, Vtbl.D3D12DeviceChild_GetDevice);
                 Guid iidDev = Guids.IID_ID3D12Device;
                 nint dev = 0;
                 int hr = getDevice(queue, &iidDev, &dev);
@@ -51,7 +49,7 @@ public static unsafe class ExecuteCommandListsHook
                 {
                     lastQueueDevice = dev;
                     lastQueue = queue;
-                    Com.Release(dev); 
+                    Com.Release(dev);
                     Logger.Info("ECLHook", $"captured direct queue=0x{queue:X} device=0x{dev:X}");
                 }
                 else

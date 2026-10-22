@@ -10,8 +10,10 @@ public static unsafe class Overlay
     public static Action onDraw { get; set; }
     public static Action onInput { get; set; }
 
+    internal static nint Dx10SwapChain => swapChain;
     internal static nint Dx11SwapChain => swapChain;
     internal static nint Dx12SwapChain => swapChain;
+    internal static Dx10Backend Dx10Backend => backend10;
     internal static D3D11Backend Dx11Backend => backend11;
     internal static D3D12Backend Dx12Backend => backend12;
     internal static D3D9Backend Dx9Backend => backend9;
@@ -31,6 +33,7 @@ public static unsafe class Overlay
 
     private static RenderApi api = RenderApi.None;
     private static D3D9Backend backend9;
+    private static Dx10Backend backend10;
     private static D3D11Backend backend11;
     private static D3D12Backend backend12;
     private static OpenglBackend backendGl;
@@ -40,6 +43,15 @@ public static unsafe class Overlay
         if (started) return;
         started = true;
         Logger.Info("Overlay", "Initialize");
+    }
+
+    public static void Stop()
+    {
+        lock (gate)
+        {
+            ShutdownInternal();
+            started = false;
+        }
     }
 
     internal static void OnPresent(nint handle, uint flags, bool isGl)
@@ -81,10 +93,10 @@ public static unsafe class Overlay
         }
     }
 
-    private static KieroRenderType DetectSwapChainApi(nint sc)
+    private static KieroRenderType DetectDxgiApi(nint sc)
     {
-        nint vtSc = *(nint*)sc;
-        var getDevice = (delegate* unmanaged[Stdcall]<nint, Guid*, nint*, int>)(*(nint*)(vtSc + 7 * IntPtr.Size));
+        var getDevice = (delegate* unmanaged[Stdcall]<nint, Guid*, nint*, int>)
+            Vtbl.VTableM(sc, Vtbl.SwapChain_GetDevice);
 
         Guid iid12 = Guids.IID_ID3D12Device;
         nint dev = 0;
@@ -92,6 +104,9 @@ public static unsafe class Overlay
 
         Guid iid11 = Guids.IID_ID3D11Device;
         if (getDevice(sc, &iid11, &dev) >= 0 && dev != 0) { Com.Release(dev); return KieroRenderType.D3D11; }
+
+        Guid iid10 = Guids.IID_ID3D10Device;
+        if (getDevice(sc, &iid10, &dev) >= 0 && dev != 0) { Com.Release(dev); return KieroRenderType.D3D10; }
 
         return KieroRenderType.None;
     }
@@ -101,9 +116,30 @@ public static unsafe class Overlay
         if (initAttempted) return false;
 
         bool isGl = hdc != 0;
-        bool isDx9 = !isGl && Kiero.GetRenderType() == KieroRenderType.D3D9;
-        bool isDx11 = !isGl && !isDx9 && Kiero.GetRenderType() == KieroRenderType.D3D11;
-        bool isDx12 = !isGl && !isDx9 && Kiero.GetRenderType() == KieroRenderType.D3D12;
+
+        KieroRenderType apiKind;
+        if (isGl)
+        {
+            apiKind = KieroRenderType.OpenGL;
+        }
+        else if (Kiero.GetRenderType() == KieroRenderType.D3D9)
+        {
+            apiKind = KieroRenderType.D3D9;
+        }
+        else
+        {
+            apiKind = DetectDxgiApi(sc);
+            if (apiKind == KieroRenderType.None)
+            {
+                Logger.Warn("Overlay", "DetectDxgiApi returned None, falling back to Kiero.GetRenderType()");
+                apiKind = Kiero.GetRenderType();
+            }
+        }
+
+        bool isDx9 = apiKind == KieroRenderType.D3D9;
+        bool isDx10 = apiKind == KieroRenderType.D3D10;
+        bool isDx11 = apiKind == KieroRenderType.D3D11;
+        bool isDx12 = apiKind == KieroRenderType.D3D12;
 
         if (isDx12 && ExecuteCommandListsHook.LastQueue == 0)
         {
@@ -127,7 +163,7 @@ public static unsafe class Overlay
         {
             Logger.Info("Overlay", $"InitImGui dev=0x{sc:X}");
         }
-        else if (isDx11 || isDx12)
+        else if (isDx10 || isDx11 || isDx12)
         {
             if (!Dxgi.TryGetDesc(sc, out uint w, out uint h, out dxFmt, out nint hwnd))
             {
@@ -143,7 +179,7 @@ public static unsafe class Overlay
                 return false;
             }
 
-            Logger.Info("Overlay", $"InitImGui sc=0x{sc:X} {w}x{h} hwnd=0x{hwnd:X}");
+            Logger.Info("Overlay", $"InitImGui sc=0x{sc:X} {w}x{h} hwnd=0x{hwnd:X} api={apiKind}");
         }
         else
         {
@@ -223,6 +259,20 @@ public static unsafe class Overlay
             api = RenderApi.Dx11;
             swapChain = sc;
         }
+        else if (isDx10)
+        {
+            backend10 = new Dx10Backend();
+            if (!backend10.Init(sc))
+            {
+                Logger.Error("Overlay", "Dx10Backend.Init failed");
+                backend10 = null;
+                ImGui.DestroyContext(context); context = 0;
+                initAttempted = false;
+                return false;
+            }
+            api = RenderApi.Dx10;
+            swapChain = sc;
+        }
 
         lastTicks = Stopwatch.GetTimestamp();
         ready = true;
@@ -246,22 +296,13 @@ public static unsafe class Overlay
             w = w9;
             h = h9;
         }
-        else if (api == RenderApi.Dx11)
+        else if (api == RenderApi.Dx10 || api == RenderApi.Dx11 || api == RenderApi.Dx12)
         {
-            if (!Dxgi.TryGetSize(swapChain, out uint w11, out uint h11)) return;
-            w = w11;
-            h = h11;
+            if (!Dxgi.TryGetSize(swapChain, out uint w1, out uint h1)) return;
+            w = w1;
+            h = h1;
         }
-        else if (api == RenderApi.Dx12)
-        {
-            if (!Dxgi.TryGetSize(swapChain, out uint w12, out uint h12)) return;
-            w = w12;
-            h = h12;
-        }
-        else
-        {
-            return;
-        }
+        else { return; }
 
         if (w < 1f || h < 1f) return;
 
@@ -275,6 +316,7 @@ public static unsafe class Overlay
 
         if (api == RenderApi.Gl) backendGl.NewFrame();
         else if (api == RenderApi.Dx9) backend9.NewFrame();
+        else if (api == RenderApi.Dx10) backend10.NewFrame();
         else if (api == RenderApi.Dx11) backend11.NewFrame();
         else if (api == RenderApi.Dx12) backend12.NewFrame();
 
@@ -299,6 +341,7 @@ public static unsafe class Overlay
 
         if (api == RenderApi.Gl) backendGl.RenderDrawData(dd);
         else if (api == RenderApi.Dx9) backend9.RenderDrawData(dd);
+        else if (api == RenderApi.Dx10) backend10.RenderDrawData(dd);
         else if (api == RenderApi.Dx11) backend11.RenderDrawData(dd);
         else if (api == RenderApi.Dx12) backend12.RenderDrawData(dd);
     }
@@ -308,6 +351,7 @@ public static unsafe class Overlay
         try
         {
             if (backend9 != null) { backend9.Shutdown(); backend9 = null; }
+            if (backend10 != null) { backend10.Shutdown(); backend10 = null; }
             if (backend11 != null) { backend11.Shutdown(); backend11 = null; }
             if (backend12 != null) { backend12.Shutdown(); backend12 = null; }
             if (backendGl != null) { backendGl.Shutdown(); backendGl = null; }
@@ -323,6 +367,7 @@ public static unsafe class Overlay
         ready = false;
         swapChain = 0;
         api = RenderApi.None;
+        queueWaitLogged = false;
         Logger.Info("Overlay", "ShutdownInternal complete");
     }
 }

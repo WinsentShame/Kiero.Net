@@ -15,7 +15,8 @@ public static unsafe class Dxgi
     {
         w = h = 0;
         byte* desc = stackalloc byte[128];
-        var getDesc = (delegate* unmanaged[Stdcall]<nint, void*, int>)((*(void***)sc)[DxgiVt.SwapChain_GetDesc]);
+        var getDesc = (delegate* unmanaged[Stdcall]<nint, void*, int>)
+            Vtbl.VTableM(sc, Vtbl.SwapChain_GetDesc);
         if (getDesc(sc, desc) < 0) return false;
         w = *(uint*)(desc + 0);
         h = *(uint*)(desc + 4);
@@ -27,7 +28,8 @@ public static unsafe class Dxgi
         w = h = fmt = 0;
         hwnd = 0;
         byte* desc = stackalloc byte[128];
-        var getDesc = (delegate* unmanaged[Stdcall]<nint, void*, int>)((*(void***)sc)[DxgiVt.SwapChain_GetDesc]);
+        var getDesc = (delegate* unmanaged[Stdcall]<nint, void*, int>)
+            Vtbl.VTableM(sc, Vtbl.SwapChain_GetDesc);
         if (getDesc(sc, desc) < 0) return false;
         w = *(uint*)(desc + 0);
         h = *(uint*)(desc + 4);
@@ -38,8 +40,7 @@ public static unsafe class Dxgi
 
     public static uint GetCurrentBackBufferIndex(nint sc)
     {
-        nint vt = *(nint*)sc;
-        nint addr = *(nint*)(vt + DxgiVt.SwapChain_GetCurrentBackBufferIndex * IntPtr.Size);
+        nint addr = Vtbl.VTableM(sc, Vtbl.SwapChain3_GetCurrentBackBufferIndex);
         if (addr == 0) return 0;
         var fn = (delegate* unmanaged[Stdcall]<nint, uint>)addr;
         return fn(sc);
@@ -48,7 +49,8 @@ public static unsafe class Dxgi
     public static nint GetBackBuffer(nint sc, uint idx, Guid iid)
     {
         nint bb = 0;
-        var getBuffer = (delegate* unmanaged[Stdcall]<nint, uint, Guid*, nint*, int>)((*(void***)sc)[DxgiVt.SwapChain_GetBuffer]);
+        var getBuffer = (delegate* unmanaged[Stdcall]<nint, uint, Guid*, nint*, int>)
+            Vtbl.VTableM(sc, Vtbl.SwapChain_GetBuffer);
         return getBuffer(sc, idx, &iid, &bb) < 0 ? 0 : bb;
     }
 

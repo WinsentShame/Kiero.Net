@@ -4,12 +4,6 @@ namespace Kiero.Net;
 
 internal sealed unsafe class D3D11Backend
 {
-    private const int VT_GetDevice = 3;
-    private const int VT_CreateRenderTargetView = 9;
-    private const int VT_OMSetRenderTargets = 33;
-    private const int VT_OMGetRenderTargets = 89;
-    private const int VT_GetImmediateContext = 40;
-
     private const int MAX_BACKBUFFERS = 4;
 
     private nint swapChain;
@@ -46,7 +40,8 @@ internal sealed unsafe class D3D11Backend
         if (bb == 0) { Logger.Error("Dx11", "backbuffer=0"); return false; }
 
         nint dev = 0;
-        var getDevice = (delegate* unmanaged[Stdcall]<nint, nint*, int>)((*(void***)bb)[VT_GetDevice]);
+        var getDevice = (delegate* unmanaged[Stdcall]<nint, nint*, int>)
+            Vtbl.VTableM(bb, Vtbl.D3D11Texture2D_GetDevice);
         int hr = getDevice(bb, &dev);
         Com.Release(bb);
         if (hr < 0 || dev == 0) { Logger.Error("Dx11", $"GetDevice hr=0x{hr:X}"); return false; }
@@ -54,7 +49,8 @@ internal sealed unsafe class D3D11Backend
         Logger.Info("Dx11", $"device=0x{dev:X}");
 
         nint ctx = 0;
-        var getCtx = (delegate* unmanaged[Stdcall]<nint, nint*, void>)((*(void***)dev)[VT_GetImmediateContext]);
+        var getCtx = (delegate* unmanaged[Stdcall]<nint, nint*, void>)
+            Vtbl.VTableM(dev, Vtbl.D3D11Device_GetImmediateContext);
         getCtx(dev, &ctx);
         if (ctx == 0) { Logger.Error("Dx11", "no context"); return false; }
         context = ctx;
@@ -107,7 +103,7 @@ internal sealed unsafe class D3D11Backend
 
                 nint newRtv = 0;
                 var createRtv = (delegate* unmanaged[Stdcall]<nint, nint, nint, nint*, int>)
-                    ((*(void***)device)[VT_CreateRenderTargetView]);
+                    Vtbl.VTableM(device, Vtbl.D3D11Device_CreateRenderTargetView);
                 int hr = createRtv(device, bb, 0, &newRtv);
                 if (hr < 0 || newRtv == 0) return;
 
@@ -119,7 +115,7 @@ internal sealed unsafe class D3D11Backend
             try
             {
                 var omGet = (delegate* unmanaged[Stdcall]<nint, uint, nint*, nint*, void>)
-                    ((*(void***)context)[VT_OMGetRenderTargets]);
+                    Vtbl.VTableM(context, Vtbl.D3D11Context_OMGetRenderTargets);
                 nint tmpRtv = 0;
                 nint tmpDsv = 0;
                 omGet(context, 1, &tmpRtv, &tmpDsv);
@@ -131,7 +127,7 @@ internal sealed unsafe class D3D11Backend
 
             nint rtvHandle = rtvs[idx];
             var omSet = (delegate* unmanaged[Stdcall]<nint, uint, nint*, nint, void>)
-                ((*(void***)context)[VT_OMSetRenderTargets]);
+                Vtbl.VTableM(context, Vtbl.D3D11Context_OMSetRenderTargets);
             omSet(context, 1, &rtvHandle, 0);
 
             ImGui.ImplDX11RenderDrawData(drawData);

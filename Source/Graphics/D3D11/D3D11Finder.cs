@@ -47,9 +47,8 @@ public static unsafe class D3D11Finder
 
             try
             {
-                nint vt = *(nint*)sc;
-                present = *(nint*)(vt + 8 * IntPtr.Size);
-                resizeBuffers = *(nint*)(vt + 13 * IntPtr.Size);
+                present = Vtbl.VTableM(sc, Vtbl.SwapChain_Present);
+                resizeBuffers = Vtbl.VTableM(sc, Vtbl.SwapChain_ResizeBuffers);
 
                 nint sc3 = 0;
                 Guid iid3 = Guids.IID_IDXGISwapChain3;
@@ -57,9 +56,8 @@ public static unsafe class D3D11Finder
                 {
                     try
                     {
-                        nint vt3 = *(nint*)sc3;
-                        present1 = *(nint*)(vt3 + 22 * IntPtr.Size);                   
-                        resizeBuffers1 = *(nint*)(vt3 + DxgiVt.SwapChain3_ResizeBuffers1 * IntPtr.Size);
+                        present1 = Vtbl.VTableM(sc3, Vtbl.SwapChain1_Present1);
+                        resizeBuffers1 = Vtbl.VTableM(sc3, Vtbl.SwapChain3_ResizeBuffers1);
                     }
                     finally
                     {
@@ -74,8 +72,7 @@ public static unsafe class D3D11Finder
                     {
                         try
                         {
-                            nint vt1 = *(nint*)sc1;
-                            present1 = *(nint*)(vt1 + 22 * IntPtr.Size);
+                            present1 = Vtbl.VTableM(sc1, Vtbl.SwapChain1_Present1);
                         }
                         finally
                         {

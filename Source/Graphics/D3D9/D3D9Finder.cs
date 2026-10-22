@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Kiero.Net;
+﻿namespace Kiero.Net;
 
 public static unsafe class D3D9Finder
 {
@@ -26,18 +24,16 @@ public static unsafe class D3D9Finder
             };
 
             nint device = 0;
-            nint vtD3D9 = *(nint*)d3d9;
             var createDevice = (delegate* unmanaged[Stdcall]<nint, uint, uint, nint, uint, D3D9Structs.D3DPRESENT_PARAMETERS*, nint*, int>)
-                (*(nint*)(vtD3D9 + 16 * IntPtr.Size));
+                Vtbl.VTableM(d3d9, Vtbl.Direct3D9_CreateDevice);
 
             int hr = createDevice(d3d9, 0, 1, hwnd, 32, &pp, &device);
             if (hr < 0 || device == 0) return false;
 
             try
             {
-                nint vt = *(nint*)device;
-                present = *(nint*)(vt + 17 * IntPtr.Size);
-                reset = *(nint*)(vt + 16 * IntPtr.Size);
+                present = Vtbl.VTableM(device, Vtbl.Direct3DDevice9_Present);
+                reset = Vtbl.VTableM(device, Vtbl.Direct3DDevice9_Reset);
 
                 Logger.Info("D3D9Finder", $"Present=0x{present:X} Reset=0x{reset:X}");
                 return present != 0;

@@ -19,8 +19,8 @@ public static unsafe class D3D12Finder
 
         try
         {
-            nint vtFactory = *(nint*)factory;
-            var enumAdapters = (delegate* unmanaged[Stdcall]<nint, uint, nint*, int>)(*(nint*)(vtFactory + 12 * IntPtr.Size));
+            var enumAdapters = (delegate* unmanaged[Stdcall]<nint, uint, nint*, int>)
+                Vtbl.VTableM(factory, Vtbl.Factory1_EnumAdapters1);
 
             byte* desc = stackalloc byte[0x140];
             for (uint i = 0; i < 8; i++)
@@ -28,12 +28,12 @@ public static unsafe class D3D12Finder
                 nint a = 0;
                 if (enumAdapters(factory, i, &a) < 0 || a == 0) break;
 
-                nint vtA = *(nint*)a;
-                var getDesc = (delegate* unmanaged[Stdcall]<nint, void*, int>)(*(nint*)(vtA + 10 * IntPtr.Size));
+                var getAdapterDesc = (delegate* unmanaged[Stdcall]<nint, void*, int>)
+                    Vtbl.VTableM(a, Vtbl.Adapter1_GetDesc1);
 
                 for (int b = 0; b < 0x140; b++) desc[b] = 0;
 
-                if (getDesc(a, desc) >= 0)
+                if (getAdapterDesc(a, desc) >= 0)
                 {
                     uint flags = *(uint*)(desc + 0x130);
                     if ((flags & 0x2) == 0) { adapter = a; break; }
@@ -48,20 +48,19 @@ public static unsafe class D3D12Finder
             if (hr < 0 || device == 0) { Logger.Error("D3D12Finder", $"D3D12CreateDevice hr=0x{hr:X8}"); return false; }
 
             var qdesc = new D3D12Structs.D3D12_COMMAND_QUEUE_DESC { Type = D3D12Structs.COMMAND_LIST_TYPE_DIRECT };
-            nint vtDev = *(nint*)device;
-            var createQueue = (delegate* unmanaged[Stdcall]<nint, D3D12Structs.D3D12_COMMAND_QUEUE_DESC*, Guid*, nint*, int>)(*(nint*)(vtDev + 8 * IntPtr.Size));
+            var createQueue = (delegate* unmanaged[Stdcall]<nint, D3D12Structs.D3D12_COMMAND_QUEUE_DESC*, Guid*, nint*, int>)
+                Vtbl.VTableM(device, Vtbl.D3D12Device_CreateCommandQueue);
             Guid iidQueue = Guids.IID_ID3D12CommandQueue;
             hr = createQueue(device, &qdesc, &iidQueue, &queue);
             if (hr < 0 || queue == 0) { Logger.Error("D3D12Finder", $"CreateCommandQueue hr=0x{hr:X8}"); return false; }
 
-            nint vtQueue = *(nint*)queue;
-            nint execCmdListsAddr = *(nint*)(vtQueue + 10 * IntPtr.Size);
+            nint execCmdListsAddr = Vtbl.VTableM(queue, Vtbl.D3D12Queue_ExecuteCommandLists);
             if (execCmdListsAddr != 0 && !ExecuteCommandListsHook.IsInstalled)
             {
                 if (ExecuteCommandListsHook.Install(execCmdListsAddr))
                 {
                     Logger.Info("Dx12", "ExecuteCommandLists hook installed (from game queue)");
-                    executeCommandLists = execCmdListsAddr; 
+                    executeCommandLists = execCmdListsAddr;
                 }
                 else
                 {

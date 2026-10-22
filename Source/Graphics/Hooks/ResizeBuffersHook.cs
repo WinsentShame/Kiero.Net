@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace Kiero.Net;
 
@@ -9,45 +10,52 @@ public static unsafe class ResizeBuffersHook
     private static nint original1;
     private static nint originalDx9Reset;
 
+    private static int installed;
+    private static int installed1;
+    private static int installedDx9;
+
     public static bool Install(nint addr)
     {
         if (addr == 0) return false;
+        if (Interlocked.CompareExchange(ref installed, 1, 0) != 0) return true;
 
         void* detour = (delegate* unmanaged[Stdcall]<nint, uint, uint, uint, uint, uint, int>)&Detour;
         void* orig = null;
         int hr = MinHook.CreateHook((void*)addr, detour, &orig);
-        if (hr != 0) { Logger.Warn("ResizeBuffers", $"CreateHook hr={hr}"); return false; }
+        if (hr != 0) { Logger.Warn("ResizeBuffers", $"CreateHook hr={hr}"); installed = 0; return false; }
         original = (nint)orig;
 
-        if (MinHook.EnableHook((void*)addr) != 0) return false;
+        if (MinHook.EnableHook((void*)addr) != 0) { installed = 0; return false; }
         return true;
     }
 
     public static bool InstallResizeBuffers1(nint addr)
     {
         if (addr == 0) return false;
+        if (Interlocked.CompareExchange(ref installed1, 1, 0) != 0) return true;
 
         void* detour = (delegate* unmanaged[Stdcall]<nint, uint, uint, uint, uint, uint, nint, nint, int>)&Detour1;
         void* orig = null;
         int hr = MinHook.CreateHook((void*)addr, detour, &orig);
-        if (hr != 0) { Logger.Warn("ResizeBuffers1", $"CreateHook hr={hr}"); return false; }
+        if (hr != 0) { Logger.Warn("ResizeBuffers1", $"CreateHook hr={hr}"); installed1 = 0; return false; }
         original1 = (nint)orig;
 
-        if (MinHook.EnableHook((void*)addr) != 0) return false;
+        if (MinHook.EnableHook((void*)addr) != 0) { installed1 = 0; return false; }
         return true;
     }
 
     public static bool InstallDx9Reset(nint addr)
     {
         if (addr == 0) return false;
+        if (Interlocked.CompareExchange(ref installedDx9, 1, 0) != 0) return true;
 
         void* detour = (delegate* unmanaged[Stdcall]<nint, nint, int>)&DetourDx9Reset;
         void* orig = null;
         int hr = MinHook.CreateHook((void*)addr, detour, &orig);
-        if (hr != 0) { Logger.Warn("Reset", $"CreateHook hr={hr}"); return false; }
+        if (hr != 0) { Logger.Warn("Reset", $"CreateHook hr={hr}"); installedDx9 = 0; return false; }
         originalDx9Reset = (nint)orig;
 
-        if (MinHook.EnableHook((void*)addr) != 0) return false;
+        if (MinHook.EnableHook((void*)addr) != 0) { installedDx9 = 0; return false; }
         return true;
     }
 
@@ -57,16 +65,9 @@ public static unsafe class ResizeBuffersHook
 
         try
         {
-            if (Overlay.Dx11SwapChain == sc)
-            {
-                D3D11Backend be = Overlay.Dx11Backend;
-                if (be != null) be.ReleaseRenderTarget();
-            }
-            if (Overlay.Dx12SwapChain == sc)
-            {
-                D3D12Backend be = Overlay.Dx12Backend;
-                if (be != null) be.OnResizeBuffers();
-            }
+            if (Overlay.Dx10SwapChain == sc) Overlay.Dx10Backend?.ReleaseRenderTarget();
+            if (Overlay.Dx11SwapChain == sc) Overlay.Dx11Backend?.ReleaseRenderTarget();
+            if (Overlay.Dx12SwapChain == sc) Overlay.Dx12Backend?.OnResizeBuffers();
         }
         catch (System.Exception ex) { Logger.Error(tag, ex); }
     }
