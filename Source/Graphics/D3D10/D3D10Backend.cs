@@ -1,4 +1,6 @@
-﻿namespace Kiero.Net;
+﻿using System;
+
+namespace Kiero.Net;
 
 internal sealed unsafe class Dx10Backend : IBackend
 {
@@ -14,18 +16,19 @@ internal sealed unsafe class Dx10Backend : IBackend
         swapChain = handle;
         Logger.Info("Dx10", $"Init sc=0x{swapChain:X}");
 
-        nint bb = Dxgi.GetBackBuffer(swapChain, 0, Guids.IID_ID3D10Texture2D);
-        if (bb == 0) { Logger.Error("Dx10", "backbuffer=0"); return false; }
-
+        var getDevFromSc = (delegate* unmanaged[Stdcall]<nint, Guid*, nint*, int>)
+            Vtbl.VTableM(swapChain, Vtbl.DXGIDeviceSubObject_GetDevice);
+        Guid iidDev = Guids.IID_ID3D10Device;
         nint dev = 0;
-        var getDevice = (delegate* unmanaged[Stdcall]<nint, nint*, int>)
-            Vtbl.VTableM(bb, Vtbl.D3D10Texture2D_GetDevice);
-        int hr = getDevice(bb, &dev);
-        Com.Release(bb);
-        if (hr < 0 || dev == 0) { Logger.Error("Dx10", $"GetDevice hr=0x{hr:X}"); return false; }
+        int hr = getDevFromSc(swapChain, &iidDev, &dev);
+        if (hr < 0 || dev == 0) { Logger.Error("Dx10", $"swapChain->GetDevice hr=0x{hr:X}"); return false; }
         device = dev;
+        Logger.Info("Dx10", $"device from swapchain=0x{dev:X}");
 
-        if (ImGui.ImplDX10Init(device) == 0) { Logger.Error("Dx10", "ImplDX10Init failed"); return false; }
+        if (ImGui.ImplDX10Init(device) == 0)
+        { Logger.Error("Dx10", "ImplDX10Init failed"); return false; }
+        Logger.Info("Dx10", "ImplDX10Init OK");
+
         isReady = true;
         return true;
     }

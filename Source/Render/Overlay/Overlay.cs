@@ -111,13 +111,13 @@ public static unsafe class Overlay
         nint dev = Vtbl.SwapChainGetDevice(sc, &iid12);
         if (dev != 0) { Com.Release(dev); return RenderApi.Dx12; }
 
-        Guid iid11 = Guids.IID_ID3D11Device;
-        dev = Vtbl.SwapChainGetDevice(sc, &iid11);
-        if (dev != 0) { Com.Release(dev); return RenderApi.Dx11; }
-
         Guid iid10 = Guids.IID_ID3D10Device;
         dev = Vtbl.SwapChainGetDevice(sc, &iid10);
         if (dev != 0) { Com.Release(dev); return RenderApi.Dx10; }
+
+        Guid iid11 = Guids.IID_ID3D11Device;
+        dev = Vtbl.SwapChainGetDevice(sc, &iid11);
+        if (dev != 0) { Com.Release(dev); return RenderApi.Dx11; }
 
         return RenderApi.None;
     }

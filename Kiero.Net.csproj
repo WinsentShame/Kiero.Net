@@ -9,6 +9,8 @@
     <RootNamespace>Kiero.Net</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <Folder Include="Source\Graphics\Vulkan\" />
+    <Compile Remove="Source\Graphics\Vulkan\**" />
+    <EmbeddedResource Remove="Source\Graphics\Vulkan\**" />
+    <None Remove="Source\Graphics\Vulkan\**" />
   </ItemGroup>
 </Project>
