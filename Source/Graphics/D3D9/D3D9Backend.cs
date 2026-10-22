@@ -3,7 +3,6 @@
 internal sealed unsafe class D3D9Backend : IBackend
 {
     private nint device;
-    private long frameCounter;
 
     public bool isReady { get; private set; }
 
