@@ -77,7 +77,7 @@ public static unsafe class Overlay
                 if (source == PresentSource.Gl)
                 {
                     if (backend is OpenglBackend gl && handle != gl.Hdc) return;
-                    if (!ready && !InitImGui(handle, 0, source)) return;
+                    if (!ready && !InitImGui(0, handle, source)) return;
                 }
                 else if (source == PresentSource.Dx9)
                 {
