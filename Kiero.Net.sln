@@ -5,9 +5,7 @@ VisualStudioVersion = 17.14.37314.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kiero.Net", "Kiero.Net.csproj", "{C03852F3-DBB7-46F0-959F-5A4A6AB69BBB}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Kiero", "Kiero", "{36D591C7-65C7-A0D1-1CBC-10CDE441BDC8}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kiero.Net.Example", "..\Kiero.Net.Example\Kiero.Net.Example.csproj", "{9F7C893D-2A12-A713-691D-FE4448A37A93}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MinecraftD3D11_UWP", "Example\MinecraftD3D11_UWP\MinecraftD3D11_UWP.csproj", "{DACB4693-93E1-4A5C-84EF-4CB9A16B16F8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,17 +17,13 @@ Global
 		{C03852F3-DBB7-46F0-959F-5A4A6AB69BBB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C03852F3-DBB7-46F0-959F-5A4A6AB69BBB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C03852F3-DBB7-46F0-959F-5A4A6AB69BBB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9F7C893D-2A12-A713-691D-FE4448A37A93}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9F7C893D-2A12-A713-691D-FE4448A37A93}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9F7C893D-2A12-A713-691D-FE4448A37A93}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9F7C893D-2A12-A713-691D-FE4448A37A93}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DACB4693-93E1-4A5C-84EF-4CB9A16B16F8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DACB4693-93E1-4A5C-84EF-4CB9A16B16F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DACB4693-93E1-4A5C-84EF-4CB9A16B16F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DACB4693-93E1-4A5C-84EF-4CB9A16B16F8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{C03852F3-DBB7-46F0-959F-5A4A6AB69BBB} = {36D591C7-65C7-A0D1-1CBC-10CDE441BDC8}
-		{9F7C893D-2A12-A713-691D-FE4448A37A93} = {36D591C7-65C7-A0D1-1CBC-10CDE441BDC8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9230D910-F776-4E53-9BEC-F686106E11DE}
