@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kiero.Net", "Kiero.Net.cspr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kiero.MinecraftD3D11_UWP", "..\Kiero.MinecraftD3D11_UWP\Kiero.MinecraftD3D11_UWP.csproj", "{D376525E-D247-3B51-509C-D0948115DDA2}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Kiero", "Kiero", "{36D591C7-65C7-A0D1-1CBC-10CDE441BDC8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,6 +26,10 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{C03852F3-DBB7-46F0-959F-5A4A6AB69BBB} = {36D591C7-65C7-A0D1-1CBC-10CDE441BDC8}
+		{D376525E-D247-3B51-509C-D0948115DDA2} = {36D591C7-65C7-A0D1-1CBC-10CDE441BDC8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9230D910-F776-4E53-9BEC-F686106E11DE}
