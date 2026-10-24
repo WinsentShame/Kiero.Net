@@ -16,4 +16,7 @@
 		</Description>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	</PropertyGroup>
+	<ItemGroup>
+	  <Folder Include="Example\" />
+	</ItemGroup>
 </Project>
