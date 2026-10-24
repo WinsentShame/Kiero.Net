@@ -5,9 +5,9 @@ VisualStudioVersion = 17.14.37314.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kiero.Net", "Kiero.Net.csproj", "{C03852F3-DBB7-46F0-959F-5A4A6AB69BBB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kiero.MinecraftD3D11_UWP", "..\Kiero.MinecraftD3D11_UWP\Kiero.MinecraftD3D11_UWP.csproj", "{D376525E-D247-3B51-509C-D0948115DDA2}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Kiero", "Kiero", "{36D591C7-65C7-A0D1-1CBC-10CDE441BDC8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kiero.Net.Example", "..\Kiero.Net.Example\Kiero.Net.Example.csproj", "{9F7C893D-2A12-A713-691D-FE4448A37A93}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,17 +19,17 @@ Global
 		{C03852F3-DBB7-46F0-959F-5A4A6AB69BBB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C03852F3-DBB7-46F0-959F-5A4A6AB69BBB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C03852F3-DBB7-46F0-959F-5A4A6AB69BBB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D376525E-D247-3B51-509C-D0948115DDA2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D376525E-D247-3B51-509C-D0948115DDA2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D376525E-D247-3B51-509C-D0948115DDA2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D376525E-D247-3B51-509C-D0948115DDA2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9F7C893D-2A12-A713-691D-FE4448A37A93}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9F7C893D-2A12-A713-691D-FE4448A37A93}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F7C893D-2A12-A713-691D-FE4448A37A93}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9F7C893D-2A12-A713-691D-FE4448A37A93}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{C03852F3-DBB7-46F0-959F-5A4A6AB69BBB} = {36D591C7-65C7-A0D1-1CBC-10CDE441BDC8}
-		{D376525E-D247-3B51-509C-D0948115DDA2} = {36D591C7-65C7-A0D1-1CBC-10CDE441BDC8}
+		{9F7C893D-2A12-A713-691D-FE4448A37A93} = {36D591C7-65C7-A0D1-1CBC-10CDE441BDC8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9230D910-F776-4E53-9BEC-F686106E11DE}
