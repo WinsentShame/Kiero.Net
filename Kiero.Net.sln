@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kiero.Net", "Kiero.Net.cspr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kiero.Net.Example", "..\Kiero.Net.Example\Kiero.Net.Example.csproj", "{CE794F9A-C2AD-40F9-B1D6-97939D2E0BEF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MinecraftD3D11_UWP", "Example\MinecraftD3D11_UWP\MinecraftD3D11_UWP.csproj", "{6F67D94B-011C-4E3B-9B28-2B90BE2988B1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MinecraftD3D11_UWP", "MinecraftD3D11_UWP\MinecraftD3D11_UWP.csproj", "{BB938945-9E3D-410B-9C7E-C5D9CDAF1827}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +23,10 @@ Global
 		{CE794F9A-C2AD-40F9-B1D6-97939D2E0BEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CE794F9A-C2AD-40F9-B1D6-97939D2E0BEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CE794F9A-C2AD-40F9-B1D6-97939D2E0BEF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6F67D94B-011C-4E3B-9B28-2B90BE2988B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6F67D94B-011C-4E3B-9B28-2B90BE2988B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6F67D94B-011C-4E3B-9B28-2B90BE2988B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6F67D94B-011C-4E3B-9B28-2B90BE2988B1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BB938945-9E3D-410B-9C7E-C5D9CDAF1827}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB938945-9E3D-410B-9C7E-C5D9CDAF1827}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB938945-9E3D-410B-9C7E-C5D9CDAF1827}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB938945-9E3D-410B-9C7E-C5D9CDAF1827}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
