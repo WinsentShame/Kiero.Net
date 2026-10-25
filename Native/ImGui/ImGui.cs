@@ -4,6 +4,24 @@ namespace Kiero.Net;
 
 public static unsafe class ImGui
 {
+    public enum ImDrawFlags : int
+    {
+        None = 0,
+        Closed = 1 << 0,
+        RoundCornersTopLeft = 1 << 4,
+        RoundCornersTopRight = 1 << 5,
+        RoundCornersBottomLeft = 1 << 6,
+        RoundCornersBottomRight = 1 << 7,
+        RoundCornersNone = 1 << 8,
+        RoundCornersTop = RoundCornersTopLeft | RoundCornersTopRight,
+        RoundCornersBottom = RoundCornersBottomLeft | RoundCornersBottomRight,
+        RoundCornersLeft = RoundCornersTopLeft | RoundCornersBottomLeft,
+        RoundCornersRight = RoundCornersTopRight | RoundCornersBottomRight,
+        RoundCornersAll = RoundCornersTopLeft | RoundCornersTopRight | RoundCornersBottomLeft | RoundCornersBottomRight,
+        RoundCornersDefault_ = RoundCornersAll,
+        RoundCornersMask_ = RoundCornersAll | RoundCornersNone,
+    }
+
     // WinsentShame Test Commit
     private const string Shim = "kiero_native";
 
