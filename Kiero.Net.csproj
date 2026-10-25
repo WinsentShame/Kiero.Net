@@ -8,7 +8,7 @@
 		<AssemblyName>Kiero.Net</AssemblyName>
 		<RootNamespace>Kiero.Net</RootNamespace>
 
-		<Version>0.0.1</Version>
+		<Version>0.0.2</Version>
 		<Authors>WinsentShame</Authors>
 		<Copyright>Copyright (c) 2026 WinsentShame</Copyright>
 		<Description>C# library for injecting a Dear ImGui overlay into a game process.
